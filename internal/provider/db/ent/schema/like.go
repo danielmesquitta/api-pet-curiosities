@@ -30,8 +30,10 @@ func (Like) Fields() []ent.Field {
 func (Like) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("user", User.Type).
-			Unique(),
+			Unique().
+			StorageKey(edge.Column("user_id")),
 		edge.To("curiosity", Curiosity.Type).
-			Unique(),
+			Unique().
+			StorageKey(edge.Column("curiosity_id")),
 	}
 }

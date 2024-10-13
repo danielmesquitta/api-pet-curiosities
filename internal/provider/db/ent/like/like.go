@@ -29,14 +29,14 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "like_user"
+	UserColumn = "user_id"
 	// CuriosityTable is the table that holds the curiosity relation/edge.
 	CuriosityTable = "likes"
 	// CuriosityInverseTable is the table name for the Curiosity entity.
 	// It exists in this package in order to avoid circular dependency with the "curiosity" package.
 	CuriosityInverseTable = "curiosities"
 	// CuriosityColumn is the table column denoting the curiosity relation/edge.
-	CuriosityColumn = "like_curiosity"
+	CuriosityColumn = "curiosity_id"
 )
 
 // Columns holds all SQL columns for like fields.
@@ -48,8 +48,8 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "likes"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"like_user",
-	"like_curiosity",
+	"user_id",
+	"curiosity_id",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

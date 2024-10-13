@@ -572,13 +572,13 @@ func (uq *UserQuery) loadLikes(ctx context.Context, query *LikeQuery, nodes []*U
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.like_user
+		fk := n.user_id
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "like_user" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "user_id" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "like_user" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

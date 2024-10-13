@@ -14,7 +14,7 @@ run:
 	@air -c .air.toml
 clear:
 	@find ./tmp -mindepth 1 ! -name '.gitkeep' -delete
-gen:
+generate:
 	@go generate ./...
 build:
 	@GOOS=linux CGO_ENABLED=0 go build -ldflags="-w -s" -o ./tmp/restapi ./cmd/restapi

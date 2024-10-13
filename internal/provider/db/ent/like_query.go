@@ -457,10 +457,10 @@ func (lq *LikeQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Li
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Like)
 	for i := range nodes {
-		if nodes[i].like_user == nil {
+		if nodes[i].user_id == nil {
 			continue
 		}
-		fk := *nodes[i].like_user
+		fk := *nodes[i].user_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -477,7 +477,7 @@ func (lq *LikeQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Li
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "like_user" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -489,10 +489,10 @@ func (lq *LikeQuery) loadCuriosity(ctx context.Context, query *CuriosityQuery, n
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Like)
 	for i := range nodes {
-		if nodes[i].like_curiosity == nil {
+		if nodes[i].curiosity_id == nil {
 			continue
 		}
-		fk := *nodes[i].like_curiosity
+		fk := *nodes[i].curiosity_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -509,7 +509,7 @@ func (lq *LikeQuery) loadCuriosity(ctx context.Context, query *CuriosityQuery, n
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "like_curiosity" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "curiosity_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

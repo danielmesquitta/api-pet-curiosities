@@ -44,7 +44,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "like" package.
 	LikesInverseTable = "likes"
 	// LikesColumn is the table column denoting the likes relation/edge.
-	LikesColumn = "like_curiosity"
+	LikesColumn = "curiosity_id"
 	// ViewsTable is the table that holds the views relation/edge.
 	ViewsTable = "views"
 	// ViewsInverseTable is the table name for the View entity.

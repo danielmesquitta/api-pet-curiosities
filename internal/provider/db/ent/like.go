@@ -24,10 +24,10 @@ type Like struct {
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LikeQuery when eager-loading is set.
-	Edges          LikeEdges `json:"edges"`
-	like_user      *uuid.UUID
-	like_curiosity *uuid.UUID
-	selectValues   sql.SelectValues
+	Edges        LikeEdges `json:"edges"`
+	user_id      *uuid.UUID
+	curiosity_id *uuid.UUID
+	selectValues sql.SelectValues
 }
 
 // LikeEdges holds the relations/edges for other nodes in the graph.
@@ -72,9 +72,9 @@ func (*Like) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case like.FieldID:
 			values[i] = new(uuid.UUID)
-		case like.ForeignKeys[0]: // like_user
+		case like.ForeignKeys[0]: // user_id
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case like.ForeignKeys[1]: // like_curiosity
+		case like.ForeignKeys[1]: // curiosity_id
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -105,17 +105,17 @@ func (l *Like) assignValues(columns []string, values []any) error {
 			}
 		case like.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field like_user", values[i])
+				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
-				l.like_user = new(uuid.UUID)
-				*l.like_user = *value.S.(*uuid.UUID)
+				l.user_id = new(uuid.UUID)
+				*l.user_id = *value.S.(*uuid.UUID)
 			}
 		case like.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field like_curiosity", values[i])
+				return fmt.Errorf("unexpected type %T for field curiosity_id", values[i])
 			} else if value.Valid {
-				l.like_curiosity = new(uuid.UUID)
-				*l.like_curiosity = *value.S.(*uuid.UUID)
+				l.curiosity_id = new(uuid.UUID)
+				*l.curiosity_id = *value.S.(*uuid.UUID)
 			}
 		default:
 			l.selectValues.Set(columns[i], values[i])

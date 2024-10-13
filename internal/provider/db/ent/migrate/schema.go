@@ -35,8 +35,8 @@ var (
 	LikesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
-		{Name: "like_user", Type: field.TypeUUID, Nullable: true},
-		{Name: "like_curiosity", Type: field.TypeUUID, Nullable: true},
+		{Name: "user_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "curiosity_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// LikesTable holds the schema information for the "likes" table.
 	LikesTable = &schema.Table{
