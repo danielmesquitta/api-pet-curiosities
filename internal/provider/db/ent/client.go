@@ -17,10 +17,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/curiosity"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/like"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/user"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/view"
+	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/usercuriosity"
 )
 
 // Client is the client that holds all ent builders.
@@ -30,14 +29,12 @@ type Client struct {
 	Schema *migrate.Schema
 	// Curiosity is the client for interacting with the Curiosity builders.
 	Curiosity *CuriosityClient
-	// Like is the client for interacting with the Like builders.
-	Like *LikeClient
 	// Pet is the client for interacting with the Pet builders.
 	Pet *PetClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
-	// View is the client for interacting with the View builders.
-	View *ViewClient
+	// UserCuriosity is the client for interacting with the UserCuriosity builders.
+	UserCuriosity *UserCuriosityClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -50,10 +47,9 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Curiosity = NewCuriosityClient(c.config)
-	c.Like = NewLikeClient(c.config)
 	c.Pet = NewPetClient(c.config)
 	c.User = NewUserClient(c.config)
-	c.View = NewViewClient(c.config)
+	c.UserCuriosity = NewUserCuriosityClient(c.config)
 }
 
 type (
@@ -144,13 +140,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:       ctx,
-		config:    cfg,
-		Curiosity: NewCuriosityClient(cfg),
-		Like:      NewLikeClient(cfg),
-		Pet:       NewPetClient(cfg),
-		User:      NewUserClient(cfg),
-		View:      NewViewClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Curiosity:     NewCuriosityClient(cfg),
+		Pet:           NewPetClient(cfg),
+		User:          NewUserClient(cfg),
+		UserCuriosity: NewUserCuriosityClient(cfg),
 	}, nil
 }
 
@@ -168,13 +163,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:       ctx,
-		config:    cfg,
-		Curiosity: NewCuriosityClient(cfg),
-		Like:      NewLikeClient(cfg),
-		Pet:       NewPetClient(cfg),
-		User:      NewUserClient(cfg),
-		View:      NewViewClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Curiosity:     NewCuriosityClient(cfg),
+		Pet:           NewPetClient(cfg),
+		User:          NewUserClient(cfg),
+		UserCuriosity: NewUserCuriosityClient(cfg),
 	}, nil
 }
 
@@ -204,20 +198,18 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Curiosity.Use(hooks...)
-	c.Like.Use(hooks...)
 	c.Pet.Use(hooks...)
 	c.User.Use(hooks...)
-	c.View.Use(hooks...)
+	c.UserCuriosity.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Curiosity.Intercept(interceptors...)
-	c.Like.Intercept(interceptors...)
 	c.Pet.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
-	c.View.Intercept(interceptors...)
+	c.UserCuriosity.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -225,14 +217,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *CuriosityMutation:
 		return c.Curiosity.mutate(ctx, m)
-	case *LikeMutation:
-		return c.Like.mutate(ctx, m)
 	case *PetMutation:
 		return c.Pet.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
-	case *ViewMutation:
-		return c.View.mutate(ctx, m)
+	case *UserCuriosityMutation:
+		return c.UserCuriosity.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -362,31 +352,15 @@ func (c *CuriosityClient) QueryPet(cu *Curiosity) *PetQuery {
 	return query
 }
 
-// QueryLikes queries the likes edge of a Curiosity.
-func (c *CuriosityClient) QueryLikes(cu *Curiosity) *LikeQuery {
-	query := (&LikeClient{config: c.config}).Query()
+// QueryUserCuriosities queries the user_curiosities edge of a Curiosity.
+func (c *CuriosityClient) QueryUserCuriosities(cu *Curiosity) *UserCuriosityQuery {
+	query := (&UserCuriosityClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := cu.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(curiosity.Table, curiosity.FieldID, id),
-			sqlgraph.To(like.Table, like.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, curiosity.LikesTable, curiosity.LikesColumn),
-		)
-		fromV = sqlgraph.Neighbors(cu.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryViews queries the views edge of a Curiosity.
-func (c *CuriosityClient) QueryViews(cu *Curiosity) *ViewQuery {
-	query := (&ViewClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := cu.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(curiosity.Table, curiosity.FieldID, id),
-			sqlgraph.To(view.Table, view.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, curiosity.ViewsTable, curiosity.ViewsColumn),
+			sqlgraph.To(usercuriosity.Table, usercuriosity.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, curiosity.UserCuriositiesTable, curiosity.UserCuriositiesColumn),
 		)
 		fromV = sqlgraph.Neighbors(cu.driver.Dialect(), step)
 		return fromV, nil
@@ -416,171 +390,6 @@ func (c *CuriosityClient) mutate(ctx context.Context, m *CuriosityMutation) (Val
 		return (&CuriosityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Curiosity mutation op: %q", m.Op())
-	}
-}
-
-// LikeClient is a client for the Like schema.
-type LikeClient struct {
-	config
-}
-
-// NewLikeClient returns a client for the Like from the given config.
-func NewLikeClient(c config) *LikeClient {
-	return &LikeClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `like.Hooks(f(g(h())))`.
-func (c *LikeClient) Use(hooks ...Hook) {
-	c.hooks.Like = append(c.hooks.Like, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `like.Intercept(f(g(h())))`.
-func (c *LikeClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Like = append(c.inters.Like, interceptors...)
-}
-
-// Create returns a builder for creating a Like entity.
-func (c *LikeClient) Create() *LikeCreate {
-	mutation := newLikeMutation(c.config, OpCreate)
-	return &LikeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Like entities.
-func (c *LikeClient) CreateBulk(builders ...*LikeCreate) *LikeCreateBulk {
-	return &LikeCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *LikeClient) MapCreateBulk(slice any, setFunc func(*LikeCreate, int)) *LikeCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &LikeCreateBulk{err: fmt.Errorf("calling to LikeClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*LikeCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &LikeCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Like.
-func (c *LikeClient) Update() *LikeUpdate {
-	mutation := newLikeMutation(c.config, OpUpdate)
-	return &LikeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *LikeClient) UpdateOne(l *Like) *LikeUpdateOne {
-	mutation := newLikeMutation(c.config, OpUpdateOne, withLike(l))
-	return &LikeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *LikeClient) UpdateOneID(id uuid.UUID) *LikeUpdateOne {
-	mutation := newLikeMutation(c.config, OpUpdateOne, withLikeID(id))
-	return &LikeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Like.
-func (c *LikeClient) Delete() *LikeDelete {
-	mutation := newLikeMutation(c.config, OpDelete)
-	return &LikeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *LikeClient) DeleteOne(l *Like) *LikeDeleteOne {
-	return c.DeleteOneID(l.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *LikeClient) DeleteOneID(id uuid.UUID) *LikeDeleteOne {
-	builder := c.Delete().Where(like.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &LikeDeleteOne{builder}
-}
-
-// Query returns a query builder for Like.
-func (c *LikeClient) Query() *LikeQuery {
-	return &LikeQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeLike},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a Like entity by its id.
-func (c *LikeClient) Get(ctx context.Context, id uuid.UUID) (*Like, error) {
-	return c.Query().Where(like.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *LikeClient) GetX(ctx context.Context, id uuid.UUID) *Like {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryUser queries the user edge of a Like.
-func (c *LikeClient) QueryUser(l *Like) *UserQuery {
-	query := (&UserClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := l.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(like.Table, like.FieldID, id),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, like.UserTable, like.UserColumn),
-		)
-		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryCuriosity queries the curiosity edge of a Like.
-func (c *LikeClient) QueryCuriosity(l *Like) *CuriosityQuery {
-	query := (&CuriosityClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := l.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(like.Table, like.FieldID, id),
-			sqlgraph.To(curiosity.Table, curiosity.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, like.CuriosityTable, like.CuriosityColumn),
-		)
-		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *LikeClient) Hooks() []Hook {
-	return c.hooks.Like
-}
-
-// Interceptors returns the client interceptors.
-func (c *LikeClient) Interceptors() []Interceptor {
-	return c.inters.Like
-}
-
-func (c *LikeClient) mutate(ctx context.Context, m *LikeMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&LikeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&LikeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&LikeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&LikeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown Like mutation op: %q", m.Op())
 	}
 }
 
@@ -873,31 +682,15 @@ func (c *UserClient) QueryPets(u *User) *PetQuery {
 	return query
 }
 
-// QueryLikes queries the likes edge of a User.
-func (c *UserClient) QueryLikes(u *User) *LikeQuery {
-	query := (&LikeClient{config: c.config}).Query()
+// QueryUserCuriosities queries the user_curiosities edge of a User.
+func (c *UserClient) QueryUserCuriosities(u *User) *UserCuriosityQuery {
+	query := (&UserCuriosityClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := u.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
-			sqlgraph.To(like.Table, like.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.LikesTable, user.LikesColumn),
-		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryViews queries the views edge of a User.
-func (c *UserClient) QueryViews(u *User) *ViewQuery {
-	query := (&ViewClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, id),
-			sqlgraph.To(view.Table, view.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.ViewsTable, user.ViewsColumn),
+			sqlgraph.To(usercuriosity.Table, usercuriosity.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.UserCuriositiesTable, user.UserCuriositiesColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
@@ -930,107 +723,107 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
-// ViewClient is a client for the View schema.
-type ViewClient struct {
+// UserCuriosityClient is a client for the UserCuriosity schema.
+type UserCuriosityClient struct {
 	config
 }
 
-// NewViewClient returns a client for the View from the given config.
-func NewViewClient(c config) *ViewClient {
-	return &ViewClient{config: c}
+// NewUserCuriosityClient returns a client for the UserCuriosity from the given config.
+func NewUserCuriosityClient(c config) *UserCuriosityClient {
+	return &UserCuriosityClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `view.Hooks(f(g(h())))`.
-func (c *ViewClient) Use(hooks ...Hook) {
-	c.hooks.View = append(c.hooks.View, hooks...)
+// A call to `Use(f, g, h)` equals to `usercuriosity.Hooks(f(g(h())))`.
+func (c *UserCuriosityClient) Use(hooks ...Hook) {
+	c.hooks.UserCuriosity = append(c.hooks.UserCuriosity, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `view.Intercept(f(g(h())))`.
-func (c *ViewClient) Intercept(interceptors ...Interceptor) {
-	c.inters.View = append(c.inters.View, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `usercuriosity.Intercept(f(g(h())))`.
+func (c *UserCuriosityClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserCuriosity = append(c.inters.UserCuriosity, interceptors...)
 }
 
-// Create returns a builder for creating a View entity.
-func (c *ViewClient) Create() *ViewCreate {
-	mutation := newViewMutation(c.config, OpCreate)
-	return &ViewCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a UserCuriosity entity.
+func (c *UserCuriosityClient) Create() *UserCuriosityCreate {
+	mutation := newUserCuriosityMutation(c.config, OpCreate)
+	return &UserCuriosityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of View entities.
-func (c *ViewClient) CreateBulk(builders ...*ViewCreate) *ViewCreateBulk {
-	return &ViewCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of UserCuriosity entities.
+func (c *UserCuriosityClient) CreateBulk(builders ...*UserCuriosityCreate) *UserCuriosityCreateBulk {
+	return &UserCuriosityCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *ViewClient) MapCreateBulk(slice any, setFunc func(*ViewCreate, int)) *ViewCreateBulk {
+func (c *UserCuriosityClient) MapCreateBulk(slice any, setFunc func(*UserCuriosityCreate, int)) *UserCuriosityCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &ViewCreateBulk{err: fmt.Errorf("calling to ViewClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &UserCuriosityCreateBulk{err: fmt.Errorf("calling to UserCuriosityClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*ViewCreate, rv.Len())
+	builders := make([]*UserCuriosityCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &ViewCreateBulk{config: c.config, builders: builders}
+	return &UserCuriosityCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for View.
-func (c *ViewClient) Update() *ViewUpdate {
-	mutation := newViewMutation(c.config, OpUpdate)
-	return &ViewUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for UserCuriosity.
+func (c *UserCuriosityClient) Update() *UserCuriosityUpdate {
+	mutation := newUserCuriosityMutation(c.config, OpUpdate)
+	return &UserCuriosityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *ViewClient) UpdateOne(v *View) *ViewUpdateOne {
-	mutation := newViewMutation(c.config, OpUpdateOne, withView(v))
-	return &ViewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *UserCuriosityClient) UpdateOne(uc *UserCuriosity) *UserCuriosityUpdateOne {
+	mutation := newUserCuriosityMutation(c.config, OpUpdateOne, withUserCuriosity(uc))
+	return &UserCuriosityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *ViewClient) UpdateOneID(id uuid.UUID) *ViewUpdateOne {
-	mutation := newViewMutation(c.config, OpUpdateOne, withViewID(id))
-	return &ViewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *UserCuriosityClient) UpdateOneID(id uuid.UUID) *UserCuriosityUpdateOne {
+	mutation := newUserCuriosityMutation(c.config, OpUpdateOne, withUserCuriosityID(id))
+	return &UserCuriosityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for View.
-func (c *ViewClient) Delete() *ViewDelete {
-	mutation := newViewMutation(c.config, OpDelete)
-	return &ViewDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for UserCuriosity.
+func (c *UserCuriosityClient) Delete() *UserCuriosityDelete {
+	mutation := newUserCuriosityMutation(c.config, OpDelete)
+	return &UserCuriosityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *ViewClient) DeleteOne(v *View) *ViewDeleteOne {
-	return c.DeleteOneID(v.ID)
+func (c *UserCuriosityClient) DeleteOne(uc *UserCuriosity) *UserCuriosityDeleteOne {
+	return c.DeleteOneID(uc.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ViewClient) DeleteOneID(id uuid.UUID) *ViewDeleteOne {
-	builder := c.Delete().Where(view.ID(id))
+func (c *UserCuriosityClient) DeleteOneID(id uuid.UUID) *UserCuriosityDeleteOne {
+	builder := c.Delete().Where(usercuriosity.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &ViewDeleteOne{builder}
+	return &UserCuriosityDeleteOne{builder}
 }
 
-// Query returns a query builder for View.
-func (c *ViewClient) Query() *ViewQuery {
-	return &ViewQuery{
+// Query returns a query builder for UserCuriosity.
+func (c *UserCuriosityClient) Query() *UserCuriosityQuery {
+	return &UserCuriosityQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeView},
+		ctx:    &QueryContext{Type: TypeUserCuriosity},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a View entity by its id.
-func (c *ViewClient) Get(ctx context.Context, id uuid.UUID) (*View, error) {
-	return c.Query().Where(view.ID(id)).Only(ctx)
+// Get returns a UserCuriosity entity by its id.
+func (c *UserCuriosityClient) Get(ctx context.Context, id uuid.UUID) (*UserCuriosity, error) {
+	return c.Query().Where(usercuriosity.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *ViewClient) GetX(ctx context.Context, id uuid.UUID) *View {
+func (c *UserCuriosityClient) GetX(ctx context.Context, id uuid.UUID) *UserCuriosity {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -1038,69 +831,69 @@ func (c *ViewClient) GetX(ctx context.Context, id uuid.UUID) *View {
 	return obj
 }
 
-// QueryUser queries the user edge of a View.
-func (c *ViewClient) QueryUser(v *View) *UserQuery {
+// QueryUser queries the user edge of a UserCuriosity.
+func (c *UserCuriosityClient) QueryUser(uc *UserCuriosity) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := v.ID
+		id := uc.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(view.Table, view.FieldID, id),
+			sqlgraph.From(usercuriosity.Table, usercuriosity.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, view.UserTable, view.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, usercuriosity.UserTable, usercuriosity.UserColumn),
 		)
-		fromV = sqlgraph.Neighbors(v.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(uc.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
-// QueryCuriosity queries the curiosity edge of a View.
-func (c *ViewClient) QueryCuriosity(v *View) *CuriosityQuery {
+// QueryCuriosity queries the curiosity edge of a UserCuriosity.
+func (c *UserCuriosityClient) QueryCuriosity(uc *UserCuriosity) *CuriosityQuery {
 	query := (&CuriosityClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := v.ID
+		id := uc.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(view.Table, view.FieldID, id),
+			sqlgraph.From(usercuriosity.Table, usercuriosity.FieldID, id),
 			sqlgraph.To(curiosity.Table, curiosity.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, view.CuriosityTable, view.CuriosityColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, usercuriosity.CuriosityTable, usercuriosity.CuriosityColumn),
 		)
-		fromV = sqlgraph.Neighbors(v.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(uc.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // Hooks returns the client hooks.
-func (c *ViewClient) Hooks() []Hook {
-	return c.hooks.View
+func (c *UserCuriosityClient) Hooks() []Hook {
+	return c.hooks.UserCuriosity
 }
 
 // Interceptors returns the client interceptors.
-func (c *ViewClient) Interceptors() []Interceptor {
-	return c.inters.View
+func (c *UserCuriosityClient) Interceptors() []Interceptor {
+	return c.inters.UserCuriosity
 }
 
-func (c *ViewClient) mutate(ctx context.Context, m *ViewMutation) (Value, error) {
+func (c *UserCuriosityClient) mutate(ctx context.Context, m *UserCuriosityMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&ViewCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&UserCuriosityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&ViewUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&UserCuriosityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&ViewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&UserCuriosityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&ViewDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&UserCuriosityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown View mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown UserCuriosity mutation op: %q", m.Op())
 	}
 }
 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Curiosity, Like, Pet, User, View []ent.Hook
+		Curiosity, Pet, User, UserCuriosity []ent.Hook
 	}
 	inters struct {
-		Curiosity, Like, Pet, User, View []ent.Interceptor
+		Curiosity, Pet, User, UserCuriosity []ent.Interceptor
 	}
 )

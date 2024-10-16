@@ -10,10 +10,9 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/like"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/user"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/view"
+	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/usercuriosity"
 	"github.com/google/uuid"
 )
 
@@ -50,13 +49,13 @@ func (uc *UserCreate) SetNillableTier(u *user.Tier) *UserCreate {
 	return uc
 }
 
-// SetSubscriptionExpiresAt sets the "subscriptionExpiresAt" field.
+// SetSubscriptionExpiresAt sets the "subscription_expires_at" field.
 func (uc *UserCreate) SetSubscriptionExpiresAt(t time.Time) *UserCreate {
 	uc.mutation.SetSubscriptionExpiresAt(t)
 	return uc
 }
 
-// SetNillableSubscriptionExpiresAt sets the "subscriptionExpiresAt" field if the given value is not nil.
+// SetNillableSubscriptionExpiresAt sets the "subscription_expires_at" field if the given value is not nil.
 func (uc *UserCreate) SetNillableSubscriptionExpiresAt(t *time.Time) *UserCreate {
 	if t != nil {
 		uc.SetSubscriptionExpiresAt(*t)
@@ -64,13 +63,13 @@ func (uc *UserCreate) SetNillableSubscriptionExpiresAt(t *time.Time) *UserCreate
 	return uc
 }
 
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (uc *UserCreate) SetCreatedAt(t time.Time) *UserCreate {
 	uc.mutation.SetCreatedAt(t)
 	return uc
 }
 
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
 func (uc *UserCreate) SetNillableCreatedAt(t *time.Time) *UserCreate {
 	if t != nil {
 		uc.SetCreatedAt(*t)
@@ -78,13 +77,13 @@ func (uc *UserCreate) SetNillableCreatedAt(t *time.Time) *UserCreate {
 	return uc
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (uc *UserCreate) SetUpdatedAt(t time.Time) *UserCreate {
 	uc.mutation.SetUpdatedAt(t)
 	return uc
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
 func (uc *UserCreate) SetNillableUpdatedAt(t *time.Time) *UserCreate {
 	if t != nil {
 		uc.SetUpdatedAt(*t)
@@ -121,34 +120,19 @@ func (uc *UserCreate) AddPets(p ...*Pet) *UserCreate {
 	return uc.AddPetIDs(ids...)
 }
 
-// AddLikeIDs adds the "likes" edge to the Like entity by IDs.
-func (uc *UserCreate) AddLikeIDs(ids ...uuid.UUID) *UserCreate {
-	uc.mutation.AddLikeIDs(ids...)
+// AddUserCuriosityIDs adds the "user_curiosities" edge to the UserCuriosity entity by IDs.
+func (uc *UserCreate) AddUserCuriosityIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddUserCuriosityIDs(ids...)
 	return uc
 }
 
-// AddLikes adds the "likes" edges to the Like entity.
-func (uc *UserCreate) AddLikes(l ...*Like) *UserCreate {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// AddUserCuriosities adds the "user_curiosities" edges to the UserCuriosity entity.
+func (uc *UserCreate) AddUserCuriosities(u ...*UserCuriosity) *UserCreate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return uc.AddLikeIDs(ids...)
-}
-
-// AddViewIDs adds the "views" edge to the View entity by IDs.
-func (uc *UserCreate) AddViewIDs(ids ...uuid.UUID) *UserCreate {
-	uc.mutation.AddViewIDs(ids...)
-	return uc
-}
-
-// AddViews adds the "views" edges to the View entity.
-func (uc *UserCreate) AddViews(v ...*View) *UserCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return uc.AddViewIDs(ids...)
+	return uc.AddUserCuriosityIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -231,10 +215,10 @@ func (uc *UserCreate) check() error {
 		}
 	}
 	if _, ok := uc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "createdAt", err: errors.New(`ent: missing required field "User.createdAt"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "User.created_at"`)}
 	}
 	if _, ok := uc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updatedAt", err: errors.New(`ent: missing required field "User.updatedAt"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "User.updated_at"`)}
 	}
 	return nil
 }
@@ -311,31 +295,15 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := uc.mutation.LikesIDs(); len(nodes) > 0 {
+	if nodes := uc.mutation.UserCuriositiesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   user.LikesTable,
-			Columns: []string{user.LikesColumn},
+			Table:   user.UserCuriositiesTable,
+			Columns: []string{user.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := uc.mutation.ViewsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.ViewsTable,
-			Columns: []string{user.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

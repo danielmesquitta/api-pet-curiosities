@@ -24,12 +24,10 @@ func (Pet) Fields() []ent.Field {
 			Values("DOG", "CAT"),
 		field.String("breed").
 			NotEmpty(),
-		field.String("search").
-			NotEmpty(),
-		field.Time("createdAt").
+		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
-		field.Time("updatedAt").
+		field.Time("updated_at").
 			Default(time.Now).
 			UpdateDefault(time.Now),
 	}

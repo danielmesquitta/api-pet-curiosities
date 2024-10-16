@@ -9,25 +9,27 @@ import (
 	"github.com/google/uuid"
 )
 
-// View holds the schema definition for the View entity.
-type View struct {
+// UserCuriosity holds the schema definition for the UserCuriosity entity.
+type UserCuriosity struct {
 	ent.Schema
 }
 
-// Fields of the View.
-func (View) Fields() []ent.Field {
+// Fields of the UserCuriosity.
+func (UserCuriosity) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New).
 			Unique(),
-		field.Time("createdAt").
+		field.Bool("viewed").Default(false),
+		field.Bool("liked").Default(false),
+		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
 	}
 }
 
-// Edges of the View.
-func (View) Edges() []ent.Edge {
+// Edges of the UserCuriosity.
+func (UserCuriosity) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("user", User.Type).
 			Unique().

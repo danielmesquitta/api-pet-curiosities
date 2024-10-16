@@ -14,14 +14,12 @@ type Tx struct {
 	config
 	// Curiosity is the client for interacting with the Curiosity builders.
 	Curiosity *CuriosityClient
-	// Like is the client for interacting with the Like builders.
-	Like *LikeClient
 	// Pet is the client for interacting with the Pet builders.
 	Pet *PetClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
-	// View is the client for interacting with the View builders.
-	View *ViewClient
+	// UserCuriosity is the client for interacting with the UserCuriosity builders.
+	UserCuriosity *UserCuriosityClient
 
 	// lazily loaded.
 	client     *Client
@@ -154,10 +152,9 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Curiosity = NewCuriosityClient(tx.config)
-	tx.Like = NewLikeClient(tx.config)
 	tx.Pet = NewPetClient(tx.config)
 	tx.User = NewUserClient(tx.config)
-	tx.View = NewViewClient(tx.config)
+	tx.UserCuriosity = NewUserCuriosityClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

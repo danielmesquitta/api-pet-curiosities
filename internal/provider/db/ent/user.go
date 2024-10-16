@@ -24,12 +24,12 @@ type User struct {
 	Email string `json:"email,omitempty"`
 	// Tier holds the value of the "tier" field.
 	Tier user.Tier `json:"tier,omitempty"`
-	// SubscriptionExpiresAt holds the value of the "subscriptionExpiresAt" field.
-	SubscriptionExpiresAt *time.Time `json:"subscriptionExpiresAt,omitempty"`
-	// CreatedAt holds the value of the "createdAt" field.
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	// UpdatedAt holds the value of the "updatedAt" field.
-	UpdatedAt time.Time `json:"updatedAt,omitempty"`
+	// SubscriptionExpiresAt holds the value of the "subscription_expires_at" field.
+	SubscriptionExpiresAt *time.Time `json:"subscription_expires_at,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -40,13 +40,11 @@ type User struct {
 type UserEdges struct {
 	// Pets holds the value of the pets edge.
 	Pets []*Pet `json:"pets,omitempty"`
-	// Likes holds the value of the likes edge.
-	Likes []*Like `json:"likes,omitempty"`
-	// Views holds the value of the views edge.
-	Views []*View `json:"views,omitempty"`
+	// UserCuriosities holds the value of the user_curiosities edge.
+	UserCuriosities []*UserCuriosity `json:"user_curiosities,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [2]bool
 }
 
 // PetsOrErr returns the Pets value or an error if the edge
@@ -58,22 +56,13 @@ func (e UserEdges) PetsOrErr() ([]*Pet, error) {
 	return nil, &NotLoadedError{edge: "pets"}
 }
 
-// LikesOrErr returns the Likes value or an error if the edge
+// UserCuriositiesOrErr returns the UserCuriosities value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) LikesOrErr() ([]*Like, error) {
+func (e UserEdges) UserCuriositiesOrErr() ([]*UserCuriosity, error) {
 	if e.loadedTypes[1] {
-		return e.Likes, nil
+		return e.UserCuriosities, nil
 	}
-	return nil, &NotLoadedError{edge: "likes"}
-}
-
-// ViewsOrErr returns the Views value or an error if the edge
-// was not loaded in eager-loading.
-func (e UserEdges) ViewsOrErr() ([]*View, error) {
-	if e.loadedTypes[2] {
-		return e.Views, nil
-	}
-	return nil, &NotLoadedError{edge: "views"}
+	return nil, &NotLoadedError{edge: "user_curiosities"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -128,20 +117,20 @@ func (u *User) assignValues(columns []string, values []any) error {
 			}
 		case user.FieldSubscriptionExpiresAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field subscriptionExpiresAt", values[i])
+				return fmt.Errorf("unexpected type %T for field subscription_expires_at", values[i])
 			} else if value.Valid {
 				u.SubscriptionExpiresAt = new(time.Time)
 				*u.SubscriptionExpiresAt = value.Time
 			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field createdAt", values[i])
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				u.CreatedAt = value.Time
 			}
 		case user.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updatedAt", values[i])
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				u.UpdatedAt = value.Time
 			}
@@ -163,14 +152,9 @@ func (u *User) QueryPets() *PetQuery {
 	return NewUserClient(u.config).QueryPets(u)
 }
 
-// QueryLikes queries the "likes" edge of the User entity.
-func (u *User) QueryLikes() *LikeQuery {
-	return NewUserClient(u.config).QueryLikes(u)
-}
-
-// QueryViews queries the "views" edge of the User entity.
-func (u *User) QueryViews() *ViewQuery {
-	return NewUserClient(u.config).QueryViews(u)
+// QueryUserCuriosities queries the "user_curiosities" edge of the User entity.
+func (u *User) QueryUserCuriosities() *UserCuriosityQuery {
+	return NewUserClient(u.config).QueryUserCuriosities(u)
 }
 
 // Update returns a builder for updating this User.
@@ -206,14 +190,14 @@ func (u *User) String() string {
 	builder.WriteString(fmt.Sprintf("%v", u.Tier))
 	builder.WriteString(", ")
 	if v := u.SubscriptionExpiresAt; v != nil {
-		builder.WriteString("subscriptionExpiresAt=")
+		builder.WriteString("subscription_expires_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
-	builder.WriteString("createdAt=")
+	builder.WriteString("created_at=")
 	builder.WriteString(u.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("updatedAt=")
+	builder.WriteString("updated_at=")
 	builder.WriteString(u.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()

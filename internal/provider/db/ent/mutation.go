@@ -12,11 +12,10 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/curiosity"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/like"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/predicate"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/user"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/view"
+	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/usercuriosity"
 	"github.com/google/uuid"
 )
 
@@ -29,35 +28,31 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeCuriosity = "Curiosity"
-	TypeLike      = "Like"
-	TypePet       = "Pet"
-	TypeUser      = "User"
-	TypeView      = "View"
+	TypeCuriosity     = "Curiosity"
+	TypePet           = "Pet"
+	TypeUser          = "User"
+	TypeUserCuriosity = "UserCuriosity"
 )
 
 // CuriosityMutation represents an operation that mutates the Curiosity nodes in the graph.
 type CuriosityMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	title         *string
-	content       *string
-	createdAt     *time.Time
-	updatedAt     *time.Time
-	clearedFields map[string]struct{}
-	pet           *uuid.UUID
-	clearedpet    bool
-	likes         map[uuid.UUID]struct{}
-	removedlikes  map[uuid.UUID]struct{}
-	clearedlikes  bool
-	views         map[uuid.UUID]struct{}
-	removedviews  map[uuid.UUID]struct{}
-	clearedviews  bool
-	done          bool
-	oldValue      func(context.Context) (*Curiosity, error)
-	predicates    []predicate.Curiosity
+	op                      Op
+	typ                     string
+	id                      *uuid.UUID
+	title                   *string
+	content                 *string
+	created_at              *time.Time
+	updated_at              *time.Time
+	clearedFields           map[string]struct{}
+	pet                     *uuid.UUID
+	clearedpet              bool
+	user_curiosities        map[uuid.UUID]struct{}
+	removeduser_curiosities map[uuid.UUID]struct{}
+	cleareduser_curiosities bool
+	done                    bool
+	oldValue                func(context.Context) (*Curiosity, error)
+	predicates              []predicate.Curiosity
 }
 
 var _ ent.Mutation = (*CuriosityMutation)(nil)
@@ -236,21 +231,21 @@ func (m *CuriosityMutation) ResetContent() {
 	m.content = nil
 }
 
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (m *CuriosityMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
+	m.created_at = &t
 }
 
-// CreatedAt returns the value of the "createdAt" field in the mutation.
+// CreatedAt returns the value of the "created_at" field in the mutation.
 func (m *CuriosityMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
+	v := m.created_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "createdAt" field's value of the Curiosity entity.
+// OldCreatedAt returns the old "created_at" field's value of the Curiosity entity.
 // If the Curiosity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *CuriosityMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
@@ -267,26 +262,26 @@ func (m *CuriosityMutation) OldCreatedAt(ctx context.Context) (v time.Time, err 
 	return oldValue.CreatedAt, nil
 }
 
-// ResetCreatedAt resets all changes to the "createdAt" field.
+// ResetCreatedAt resets all changes to the "created_at" field.
 func (m *CuriosityMutation) ResetCreatedAt() {
-	m.createdAt = nil
+	m.created_at = nil
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (m *CuriosityMutation) SetUpdatedAt(t time.Time) {
-	m.updatedAt = &t
+	m.updated_at = &t
 }
 
-// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
 func (m *CuriosityMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updatedAt
+	v := m.updated_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updatedAt" field's value of the Curiosity entity.
+// OldUpdatedAt returns the old "updated_at" field's value of the Curiosity entity.
 // If the Curiosity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *CuriosityMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
@@ -303,9 +298,9 @@ func (m *CuriosityMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err 
 	return oldValue.UpdatedAt, nil
 }
 
-// ResetUpdatedAt resets all changes to the "updatedAt" field.
+// ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *CuriosityMutation) ResetUpdatedAt() {
-	m.updatedAt = nil
+	m.updated_at = nil
 }
 
 // SetPetID sets the "pet" edge to the Pet entity by id.
@@ -347,112 +342,58 @@ func (m *CuriosityMutation) ResetPet() {
 	m.clearedpet = false
 }
 
-// AddLikeIDs adds the "likes" edge to the Like entity by ids.
-func (m *CuriosityMutation) AddLikeIDs(ids ...uuid.UUID) {
-	if m.likes == nil {
-		m.likes = make(map[uuid.UUID]struct{})
+// AddUserCuriosityIDs adds the "user_curiosities" edge to the UserCuriosity entity by ids.
+func (m *CuriosityMutation) AddUserCuriosityIDs(ids ...uuid.UUID) {
+	if m.user_curiosities == nil {
+		m.user_curiosities = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.likes[ids[i]] = struct{}{}
+		m.user_curiosities[ids[i]] = struct{}{}
 	}
 }
 
-// ClearLikes clears the "likes" edge to the Like entity.
-func (m *CuriosityMutation) ClearLikes() {
-	m.clearedlikes = true
+// ClearUserCuriosities clears the "user_curiosities" edge to the UserCuriosity entity.
+func (m *CuriosityMutation) ClearUserCuriosities() {
+	m.cleareduser_curiosities = true
 }
 
-// LikesCleared reports if the "likes" edge to the Like entity was cleared.
-func (m *CuriosityMutation) LikesCleared() bool {
-	return m.clearedlikes
+// UserCuriositiesCleared reports if the "user_curiosities" edge to the UserCuriosity entity was cleared.
+func (m *CuriosityMutation) UserCuriositiesCleared() bool {
+	return m.cleareduser_curiosities
 }
 
-// RemoveLikeIDs removes the "likes" edge to the Like entity by IDs.
-func (m *CuriosityMutation) RemoveLikeIDs(ids ...uuid.UUID) {
-	if m.removedlikes == nil {
-		m.removedlikes = make(map[uuid.UUID]struct{})
+// RemoveUserCuriosityIDs removes the "user_curiosities" edge to the UserCuriosity entity by IDs.
+func (m *CuriosityMutation) RemoveUserCuriosityIDs(ids ...uuid.UUID) {
+	if m.removeduser_curiosities == nil {
+		m.removeduser_curiosities = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.likes, ids[i])
-		m.removedlikes[ids[i]] = struct{}{}
+		delete(m.user_curiosities, ids[i])
+		m.removeduser_curiosities[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedLikes returns the removed IDs of the "likes" edge to the Like entity.
-func (m *CuriosityMutation) RemovedLikesIDs() (ids []uuid.UUID) {
-	for id := range m.removedlikes {
+// RemovedUserCuriosities returns the removed IDs of the "user_curiosities" edge to the UserCuriosity entity.
+func (m *CuriosityMutation) RemovedUserCuriositiesIDs() (ids []uuid.UUID) {
+	for id := range m.removeduser_curiosities {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// LikesIDs returns the "likes" edge IDs in the mutation.
-func (m *CuriosityMutation) LikesIDs() (ids []uuid.UUID) {
-	for id := range m.likes {
+// UserCuriositiesIDs returns the "user_curiosities" edge IDs in the mutation.
+func (m *CuriosityMutation) UserCuriositiesIDs() (ids []uuid.UUID) {
+	for id := range m.user_curiosities {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetLikes resets all changes to the "likes" edge.
-func (m *CuriosityMutation) ResetLikes() {
-	m.likes = nil
-	m.clearedlikes = false
-	m.removedlikes = nil
-}
-
-// AddViewIDs adds the "views" edge to the View entity by ids.
-func (m *CuriosityMutation) AddViewIDs(ids ...uuid.UUID) {
-	if m.views == nil {
-		m.views = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.views[ids[i]] = struct{}{}
-	}
-}
-
-// ClearViews clears the "views" edge to the View entity.
-func (m *CuriosityMutation) ClearViews() {
-	m.clearedviews = true
-}
-
-// ViewsCleared reports if the "views" edge to the View entity was cleared.
-func (m *CuriosityMutation) ViewsCleared() bool {
-	return m.clearedviews
-}
-
-// RemoveViewIDs removes the "views" edge to the View entity by IDs.
-func (m *CuriosityMutation) RemoveViewIDs(ids ...uuid.UUID) {
-	if m.removedviews == nil {
-		m.removedviews = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.views, ids[i])
-		m.removedviews[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedViews returns the removed IDs of the "views" edge to the View entity.
-func (m *CuriosityMutation) RemovedViewsIDs() (ids []uuid.UUID) {
-	for id := range m.removedviews {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ViewsIDs returns the "views" edge IDs in the mutation.
-func (m *CuriosityMutation) ViewsIDs() (ids []uuid.UUID) {
-	for id := range m.views {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetViews resets all changes to the "views" edge.
-func (m *CuriosityMutation) ResetViews() {
-	m.views = nil
-	m.clearedviews = false
-	m.removedviews = nil
+// ResetUserCuriosities resets all changes to the "user_curiosities" edge.
+func (m *CuriosityMutation) ResetUserCuriosities() {
+	m.user_curiosities = nil
+	m.cleareduser_curiosities = false
+	m.removeduser_curiosities = nil
 }
 
 // Where appends a list predicates to the CuriosityMutation builder.
@@ -496,10 +437,10 @@ func (m *CuriosityMutation) Fields() []string {
 	if m.content != nil {
 		fields = append(fields, curiosity.FieldContent)
 	}
-	if m.createdAt != nil {
+	if m.created_at != nil {
 		fields = append(fields, curiosity.FieldCreatedAt)
 	}
-	if m.updatedAt != nil {
+	if m.updated_at != nil {
 		fields = append(fields, curiosity.FieldUpdatedAt)
 	}
 	return fields
@@ -639,15 +580,12 @@ func (m *CuriosityMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CuriosityMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.pet != nil {
 		edges = append(edges, curiosity.EdgePet)
 	}
-	if m.likes != nil {
-		edges = append(edges, curiosity.EdgeLikes)
-	}
-	if m.views != nil {
-		edges = append(edges, curiosity.EdgeViews)
+	if m.user_curiosities != nil {
+		edges = append(edges, curiosity.EdgeUserCuriosities)
 	}
 	return edges
 }
@@ -660,15 +598,9 @@ func (m *CuriosityMutation) AddedIDs(name string) []ent.Value {
 		if id := m.pet; id != nil {
 			return []ent.Value{*id}
 		}
-	case curiosity.EdgeLikes:
-		ids := make([]ent.Value, 0, len(m.likes))
-		for id := range m.likes {
-			ids = append(ids, id)
-		}
-		return ids
-	case curiosity.EdgeViews:
-		ids := make([]ent.Value, 0, len(m.views))
-		for id := range m.views {
+	case curiosity.EdgeUserCuriosities:
+		ids := make([]ent.Value, 0, len(m.user_curiosities))
+		for id := range m.user_curiosities {
 			ids = append(ids, id)
 		}
 		return ids
@@ -678,12 +610,9 @@ func (m *CuriosityMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CuriosityMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
-	if m.removedlikes != nil {
-		edges = append(edges, curiosity.EdgeLikes)
-	}
-	if m.removedviews != nil {
-		edges = append(edges, curiosity.EdgeViews)
+	edges := make([]string, 0, 2)
+	if m.removeduser_curiosities != nil {
+		edges = append(edges, curiosity.EdgeUserCuriosities)
 	}
 	return edges
 }
@@ -692,15 +621,9 @@ func (m *CuriosityMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *CuriosityMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case curiosity.EdgeLikes:
-		ids := make([]ent.Value, 0, len(m.removedlikes))
-		for id := range m.removedlikes {
-			ids = append(ids, id)
-		}
-		return ids
-	case curiosity.EdgeViews:
-		ids := make([]ent.Value, 0, len(m.removedviews))
-		for id := range m.removedviews {
+	case curiosity.EdgeUserCuriosities:
+		ids := make([]ent.Value, 0, len(m.removeduser_curiosities))
+		for id := range m.removeduser_curiosities {
 			ids = append(ids, id)
 		}
 		return ids
@@ -710,15 +633,12 @@ func (m *CuriosityMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CuriosityMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.clearedpet {
 		edges = append(edges, curiosity.EdgePet)
 	}
-	if m.clearedlikes {
-		edges = append(edges, curiosity.EdgeLikes)
-	}
-	if m.clearedviews {
-		edges = append(edges, curiosity.EdgeViews)
+	if m.cleareduser_curiosities {
+		edges = append(edges, curiosity.EdgeUserCuriosities)
 	}
 	return edges
 }
@@ -729,10 +649,8 @@ func (m *CuriosityMutation) EdgeCleared(name string) bool {
 	switch name {
 	case curiosity.EdgePet:
 		return m.clearedpet
-	case curiosity.EdgeLikes:
-		return m.clearedlikes
-	case curiosity.EdgeViews:
-		return m.clearedviews
+	case curiosity.EdgeUserCuriosities:
+		return m.cleareduser_curiosities
 	}
 	return false
 }
@@ -755,472 +673,11 @@ func (m *CuriosityMutation) ResetEdge(name string) error {
 	case curiosity.EdgePet:
 		m.ResetPet()
 		return nil
-	case curiosity.EdgeLikes:
-		m.ResetLikes()
-		return nil
-	case curiosity.EdgeViews:
-		m.ResetViews()
+	case curiosity.EdgeUserCuriosities:
+		m.ResetUserCuriosities()
 		return nil
 	}
 	return fmt.Errorf("unknown Curiosity edge %s", name)
-}
-
-// LikeMutation represents an operation that mutates the Like nodes in the graph.
-type LikeMutation struct {
-	config
-	op               Op
-	typ              string
-	id               *uuid.UUID
-	createdAt        *time.Time
-	clearedFields    map[string]struct{}
-	user             *uuid.UUID
-	cleareduser      bool
-	curiosity        *uuid.UUID
-	clearedcuriosity bool
-	done             bool
-	oldValue         func(context.Context) (*Like, error)
-	predicates       []predicate.Like
-}
-
-var _ ent.Mutation = (*LikeMutation)(nil)
-
-// likeOption allows management of the mutation configuration using functional options.
-type likeOption func(*LikeMutation)
-
-// newLikeMutation creates new mutation for the Like entity.
-func newLikeMutation(c config, op Op, opts ...likeOption) *LikeMutation {
-	m := &LikeMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeLike,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withLikeID sets the ID field of the mutation.
-func withLikeID(id uuid.UUID) likeOption {
-	return func(m *LikeMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *Like
-		)
-		m.oldValue = func(ctx context.Context) (*Like, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().Like.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withLike sets the old Like of the mutation.
-func withLike(node *Like) likeOption {
-	return func(m *LikeMutation) {
-		m.oldValue = func(context.Context) (*Like, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m LikeMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m LikeMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Like entities.
-func (m *LikeMutation) SetID(id uuid.UUID) {
-	m.id = &id
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *LikeMutation) ID() (id uuid.UUID, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *LikeMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []uuid.UUID{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().Like.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// SetCreatedAt sets the "createdAt" field.
-func (m *LikeMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
-}
-
-// CreatedAt returns the value of the "createdAt" field in the mutation.
-func (m *LikeMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCreatedAt returns the old "createdAt" field's value of the Like entity.
-// If the Like object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LikeMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
-	}
-	return oldValue.CreatedAt, nil
-}
-
-// ResetCreatedAt resets all changes to the "createdAt" field.
-func (m *LikeMutation) ResetCreatedAt() {
-	m.createdAt = nil
-}
-
-// SetUserID sets the "user" edge to the User entity by id.
-func (m *LikeMutation) SetUserID(id uuid.UUID) {
-	m.user = &id
-}
-
-// ClearUser clears the "user" edge to the User entity.
-func (m *LikeMutation) ClearUser() {
-	m.cleareduser = true
-}
-
-// UserCleared reports if the "user" edge to the User entity was cleared.
-func (m *LikeMutation) UserCleared() bool {
-	return m.cleareduser
-}
-
-// UserID returns the "user" edge ID in the mutation.
-func (m *LikeMutation) UserID() (id uuid.UUID, exists bool) {
-	if m.user != nil {
-		return *m.user, true
-	}
-	return
-}
-
-// UserIDs returns the "user" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// UserID instead. It exists only for internal usage by the builders.
-func (m *LikeMutation) UserIDs() (ids []uuid.UUID) {
-	if id := m.user; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetUser resets all changes to the "user" edge.
-func (m *LikeMutation) ResetUser() {
-	m.user = nil
-	m.cleareduser = false
-}
-
-// SetCuriosityID sets the "curiosity" edge to the Curiosity entity by id.
-func (m *LikeMutation) SetCuriosityID(id uuid.UUID) {
-	m.curiosity = &id
-}
-
-// ClearCuriosity clears the "curiosity" edge to the Curiosity entity.
-func (m *LikeMutation) ClearCuriosity() {
-	m.clearedcuriosity = true
-}
-
-// CuriosityCleared reports if the "curiosity" edge to the Curiosity entity was cleared.
-func (m *LikeMutation) CuriosityCleared() bool {
-	return m.clearedcuriosity
-}
-
-// CuriosityID returns the "curiosity" edge ID in the mutation.
-func (m *LikeMutation) CuriosityID() (id uuid.UUID, exists bool) {
-	if m.curiosity != nil {
-		return *m.curiosity, true
-	}
-	return
-}
-
-// CuriosityIDs returns the "curiosity" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// CuriosityID instead. It exists only for internal usage by the builders.
-func (m *LikeMutation) CuriosityIDs() (ids []uuid.UUID) {
-	if id := m.curiosity; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetCuriosity resets all changes to the "curiosity" edge.
-func (m *LikeMutation) ResetCuriosity() {
-	m.curiosity = nil
-	m.clearedcuriosity = false
-}
-
-// Where appends a list predicates to the LikeMutation builder.
-func (m *LikeMutation) Where(ps ...predicate.Like) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// WhereP appends storage-level predicates to the LikeMutation builder. Using this method,
-// users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *LikeMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.Like, len(ps))
-	for i := range ps {
-		p[i] = ps[i]
-	}
-	m.Where(p...)
-}
-
-// Op returns the operation name.
-func (m *LikeMutation) Op() Op {
-	return m.op
-}
-
-// SetOp allows setting the mutation operation.
-func (m *LikeMutation) SetOp(op Op) {
-	m.op = op
-}
-
-// Type returns the node type of this mutation (Like).
-func (m *LikeMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *LikeMutation) Fields() []string {
-	fields := make([]string, 0, 1)
-	if m.createdAt != nil {
-		fields = append(fields, like.FieldCreatedAt)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *LikeMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case like.FieldCreatedAt:
-		return m.CreatedAt()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *LikeMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case like.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
-	}
-	return nil, fmt.Errorf("unknown Like field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *LikeMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case like.FieldCreatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCreatedAt(v)
-		return nil
-	}
-	return fmt.Errorf("unknown Like field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *LikeMutation) AddedFields() []string {
-	return nil
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *LikeMutation) AddedField(name string) (ent.Value, bool) {
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *LikeMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	}
-	return fmt.Errorf("unknown Like numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *LikeMutation) ClearedFields() []string {
-	return nil
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *LikeMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *LikeMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown Like nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *LikeMutation) ResetField(name string) error {
-	switch name {
-	case like.FieldCreatedAt:
-		m.ResetCreatedAt()
-		return nil
-	}
-	return fmt.Errorf("unknown Like field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *LikeMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.user != nil {
-		edges = append(edges, like.EdgeUser)
-	}
-	if m.curiosity != nil {
-		edges = append(edges, like.EdgeCuriosity)
-	}
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *LikeMutation) AddedIDs(name string) []ent.Value {
-	switch name {
-	case like.EdgeUser:
-		if id := m.user; id != nil {
-			return []ent.Value{*id}
-		}
-	case like.EdgeCuriosity:
-		if id := m.curiosity; id != nil {
-			return []ent.Value{*id}
-		}
-	}
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *LikeMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *LikeMutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *LikeMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
-	if m.cleareduser {
-		edges = append(edges, like.EdgeUser)
-	}
-	if m.clearedcuriosity {
-		edges = append(edges, like.EdgeCuriosity)
-	}
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *LikeMutation) EdgeCleared(name string) bool {
-	switch name {
-	case like.EdgeUser:
-		return m.cleareduser
-	case like.EdgeCuriosity:
-		return m.clearedcuriosity
-	}
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *LikeMutation) ClearEdge(name string) error {
-	switch name {
-	case like.EdgeUser:
-		m.ClearUser()
-		return nil
-	case like.EdgeCuriosity:
-		m.ClearCuriosity()
-		return nil
-	}
-	return fmt.Errorf("unknown Like unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *LikeMutation) ResetEdge(name string) error {
-	switch name {
-	case like.EdgeUser:
-		m.ResetUser()
-		return nil
-	case like.EdgeCuriosity:
-		m.ResetCuriosity()
-		return nil
-	}
-	return fmt.Errorf("unknown Like edge %s", name)
 }
 
 // PetMutation represents an operation that mutates the Pet nodes in the graph.
@@ -1231,9 +688,8 @@ type PetMutation struct {
 	id                 *uuid.UUID
 	specie             *pet.Specie
 	breed              *string
-	search             *string
-	createdAt          *time.Time
-	updatedAt          *time.Time
+	created_at         *time.Time
+	updated_at         *time.Time
 	clearedFields      map[string]struct{}
 	curiosities        map[uuid.UUID]struct{}
 	removedcuriosities map[uuid.UUID]struct{}
@@ -1422,57 +878,21 @@ func (m *PetMutation) ResetBreed() {
 	m.breed = nil
 }
 
-// SetSearch sets the "search" field.
-func (m *PetMutation) SetSearch(s string) {
-	m.search = &s
-}
-
-// Search returns the value of the "search" field in the mutation.
-func (m *PetMutation) Search() (r string, exists bool) {
-	v := m.search
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldSearch returns the old "search" field's value of the Pet entity.
-// If the Pet object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PetMutation) OldSearch(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSearch is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSearch requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSearch: %w", err)
-	}
-	return oldValue.Search, nil
-}
-
-// ResetSearch resets all changes to the "search" field.
-func (m *PetMutation) ResetSearch() {
-	m.search = nil
-}
-
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (m *PetMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
+	m.created_at = &t
 }
 
-// CreatedAt returns the value of the "createdAt" field in the mutation.
+// CreatedAt returns the value of the "created_at" field in the mutation.
 func (m *PetMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
+	v := m.created_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "createdAt" field's value of the Pet entity.
+// OldCreatedAt returns the old "created_at" field's value of the Pet entity.
 // If the Pet object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *PetMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
@@ -1489,26 +909,26 @@ func (m *PetMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error)
 	return oldValue.CreatedAt, nil
 }
 
-// ResetCreatedAt resets all changes to the "createdAt" field.
+// ResetCreatedAt resets all changes to the "created_at" field.
 func (m *PetMutation) ResetCreatedAt() {
-	m.createdAt = nil
+	m.created_at = nil
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (m *PetMutation) SetUpdatedAt(t time.Time) {
-	m.updatedAt = &t
+	m.updated_at = &t
 }
 
-// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
 func (m *PetMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updatedAt
+	v := m.updated_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updatedAt" field's value of the Pet entity.
+// OldUpdatedAt returns the old "updated_at" field's value of the Pet entity.
 // If the Pet object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *PetMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
@@ -1525,9 +945,9 @@ func (m *PetMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error)
 	return oldValue.UpdatedAt, nil
 }
 
-// ResetUpdatedAt resets all changes to the "updatedAt" field.
+// ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *PetMutation) ResetUpdatedAt() {
-	m.updatedAt = nil
+	m.updated_at = nil
 }
 
 // AddCuriosityIDs adds the "curiosities" edge to the Curiosity entity by ids.
@@ -1672,20 +1092,17 @@ func (m *PetMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PetMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 4)
 	if m.specie != nil {
 		fields = append(fields, pet.FieldSpecie)
 	}
 	if m.breed != nil {
 		fields = append(fields, pet.FieldBreed)
 	}
-	if m.search != nil {
-		fields = append(fields, pet.FieldSearch)
-	}
-	if m.createdAt != nil {
+	if m.created_at != nil {
 		fields = append(fields, pet.FieldCreatedAt)
 	}
-	if m.updatedAt != nil {
+	if m.updated_at != nil {
 		fields = append(fields, pet.FieldUpdatedAt)
 	}
 	return fields
@@ -1700,8 +1117,6 @@ func (m *PetMutation) Field(name string) (ent.Value, bool) {
 		return m.Specie()
 	case pet.FieldBreed:
 		return m.Breed()
-	case pet.FieldSearch:
-		return m.Search()
 	case pet.FieldCreatedAt:
 		return m.CreatedAt()
 	case pet.FieldUpdatedAt:
@@ -1719,8 +1134,6 @@ func (m *PetMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldSpecie(ctx)
 	case pet.FieldBreed:
 		return m.OldBreed(ctx)
-	case pet.FieldSearch:
-		return m.OldSearch(ctx)
 	case pet.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case pet.FieldUpdatedAt:
@@ -1747,13 +1160,6 @@ func (m *PetMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBreed(v)
-		return nil
-	case pet.FieldSearch:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSearch(v)
 		return nil
 	case pet.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1823,9 +1229,6 @@ func (m *PetMutation) ResetField(name string) error {
 		return nil
 	case pet.FieldBreed:
 		m.ResetBreed()
-		return nil
-	case pet.FieldSearch:
-		m.ResetSearch()
 		return nil
 	case pet.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -1950,28 +1353,25 @@ func (m *PetMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                    Op
-	typ                   string
-	id                    *uuid.UUID
-	name                  *string
-	email                 *string
-	tier                  *user.Tier
-	subscriptionExpiresAt *time.Time
-	createdAt             *time.Time
-	updatedAt             *time.Time
-	clearedFields         map[string]struct{}
-	pets                  map[uuid.UUID]struct{}
-	removedpets           map[uuid.UUID]struct{}
-	clearedpets           bool
-	likes                 map[uuid.UUID]struct{}
-	removedlikes          map[uuid.UUID]struct{}
-	clearedlikes          bool
-	views                 map[uuid.UUID]struct{}
-	removedviews          map[uuid.UUID]struct{}
-	clearedviews          bool
-	done                  bool
-	oldValue              func(context.Context) (*User, error)
-	predicates            []predicate.User
+	op                      Op
+	typ                     string
+	id                      *uuid.UUID
+	name                    *string
+	email                   *string
+	tier                    *user.Tier
+	subscription_expires_at *time.Time
+	created_at              *time.Time
+	updated_at              *time.Time
+	clearedFields           map[string]struct{}
+	pets                    map[uuid.UUID]struct{}
+	removedpets             map[uuid.UUID]struct{}
+	clearedpets             bool
+	user_curiosities        map[uuid.UUID]struct{}
+	removeduser_curiosities map[uuid.UUID]struct{}
+	cleareduser_curiosities bool
+	done                    bool
+	oldValue                func(context.Context) (*User, error)
+	predicates              []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -2186,21 +1586,21 @@ func (m *UserMutation) ResetTier() {
 	m.tier = nil
 }
 
-// SetSubscriptionExpiresAt sets the "subscriptionExpiresAt" field.
+// SetSubscriptionExpiresAt sets the "subscription_expires_at" field.
 func (m *UserMutation) SetSubscriptionExpiresAt(t time.Time) {
-	m.subscriptionExpiresAt = &t
+	m.subscription_expires_at = &t
 }
 
-// SubscriptionExpiresAt returns the value of the "subscriptionExpiresAt" field in the mutation.
+// SubscriptionExpiresAt returns the value of the "subscription_expires_at" field in the mutation.
 func (m *UserMutation) SubscriptionExpiresAt() (r time.Time, exists bool) {
-	v := m.subscriptionExpiresAt
+	v := m.subscription_expires_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldSubscriptionExpiresAt returns the old "subscriptionExpiresAt" field's value of the User entity.
+// OldSubscriptionExpiresAt returns the old "subscription_expires_at" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *UserMutation) OldSubscriptionExpiresAt(ctx context.Context) (v *time.Time, err error) {
@@ -2217,39 +1617,39 @@ func (m *UserMutation) OldSubscriptionExpiresAt(ctx context.Context) (v *time.Ti
 	return oldValue.SubscriptionExpiresAt, nil
 }
 
-// ClearSubscriptionExpiresAt clears the value of the "subscriptionExpiresAt" field.
+// ClearSubscriptionExpiresAt clears the value of the "subscription_expires_at" field.
 func (m *UserMutation) ClearSubscriptionExpiresAt() {
-	m.subscriptionExpiresAt = nil
+	m.subscription_expires_at = nil
 	m.clearedFields[user.FieldSubscriptionExpiresAt] = struct{}{}
 }
 
-// SubscriptionExpiresAtCleared returns if the "subscriptionExpiresAt" field was cleared in this mutation.
+// SubscriptionExpiresAtCleared returns if the "subscription_expires_at" field was cleared in this mutation.
 func (m *UserMutation) SubscriptionExpiresAtCleared() bool {
 	_, ok := m.clearedFields[user.FieldSubscriptionExpiresAt]
 	return ok
 }
 
-// ResetSubscriptionExpiresAt resets all changes to the "subscriptionExpiresAt" field.
+// ResetSubscriptionExpiresAt resets all changes to the "subscription_expires_at" field.
 func (m *UserMutation) ResetSubscriptionExpiresAt() {
-	m.subscriptionExpiresAt = nil
+	m.subscription_expires_at = nil
 	delete(m.clearedFields, user.FieldSubscriptionExpiresAt)
 }
 
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (m *UserMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
+	m.created_at = &t
 }
 
-// CreatedAt returns the value of the "createdAt" field in the mutation.
+// CreatedAt returns the value of the "created_at" field in the mutation.
 func (m *UserMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
+	v := m.created_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "createdAt" field's value of the User entity.
+// OldCreatedAt returns the old "created_at" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *UserMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
@@ -2266,26 +1666,26 @@ func (m *UserMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error
 	return oldValue.CreatedAt, nil
 }
 
-// ResetCreatedAt resets all changes to the "createdAt" field.
+// ResetCreatedAt resets all changes to the "created_at" field.
 func (m *UserMutation) ResetCreatedAt() {
-	m.createdAt = nil
+	m.created_at = nil
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (m *UserMutation) SetUpdatedAt(t time.Time) {
-	m.updatedAt = &t
+	m.updated_at = &t
 }
 
-// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
 func (m *UserMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updatedAt
+	v := m.updated_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updatedAt" field's value of the User entity.
+// OldUpdatedAt returns the old "updated_at" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *UserMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
@@ -2302,9 +1702,9 @@ func (m *UserMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error
 	return oldValue.UpdatedAt, nil
 }
 
-// ResetUpdatedAt resets all changes to the "updatedAt" field.
+// ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *UserMutation) ResetUpdatedAt() {
-	m.updatedAt = nil
+	m.updated_at = nil
 }
 
 // AddPetIDs adds the "pets" edge to the Pet entity by ids.
@@ -2361,112 +1761,58 @@ func (m *UserMutation) ResetPets() {
 	m.removedpets = nil
 }
 
-// AddLikeIDs adds the "likes" edge to the Like entity by ids.
-func (m *UserMutation) AddLikeIDs(ids ...uuid.UUID) {
-	if m.likes == nil {
-		m.likes = make(map[uuid.UUID]struct{})
+// AddUserCuriosityIDs adds the "user_curiosities" edge to the UserCuriosity entity by ids.
+func (m *UserMutation) AddUserCuriosityIDs(ids ...uuid.UUID) {
+	if m.user_curiosities == nil {
+		m.user_curiosities = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.likes[ids[i]] = struct{}{}
+		m.user_curiosities[ids[i]] = struct{}{}
 	}
 }
 
-// ClearLikes clears the "likes" edge to the Like entity.
-func (m *UserMutation) ClearLikes() {
-	m.clearedlikes = true
+// ClearUserCuriosities clears the "user_curiosities" edge to the UserCuriosity entity.
+func (m *UserMutation) ClearUserCuriosities() {
+	m.cleareduser_curiosities = true
 }
 
-// LikesCleared reports if the "likes" edge to the Like entity was cleared.
-func (m *UserMutation) LikesCleared() bool {
-	return m.clearedlikes
+// UserCuriositiesCleared reports if the "user_curiosities" edge to the UserCuriosity entity was cleared.
+func (m *UserMutation) UserCuriositiesCleared() bool {
+	return m.cleareduser_curiosities
 }
 
-// RemoveLikeIDs removes the "likes" edge to the Like entity by IDs.
-func (m *UserMutation) RemoveLikeIDs(ids ...uuid.UUID) {
-	if m.removedlikes == nil {
-		m.removedlikes = make(map[uuid.UUID]struct{})
+// RemoveUserCuriosityIDs removes the "user_curiosities" edge to the UserCuriosity entity by IDs.
+func (m *UserMutation) RemoveUserCuriosityIDs(ids ...uuid.UUID) {
+	if m.removeduser_curiosities == nil {
+		m.removeduser_curiosities = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.likes, ids[i])
-		m.removedlikes[ids[i]] = struct{}{}
+		delete(m.user_curiosities, ids[i])
+		m.removeduser_curiosities[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedLikes returns the removed IDs of the "likes" edge to the Like entity.
-func (m *UserMutation) RemovedLikesIDs() (ids []uuid.UUID) {
-	for id := range m.removedlikes {
+// RemovedUserCuriosities returns the removed IDs of the "user_curiosities" edge to the UserCuriosity entity.
+func (m *UserMutation) RemovedUserCuriositiesIDs() (ids []uuid.UUID) {
+	for id := range m.removeduser_curiosities {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// LikesIDs returns the "likes" edge IDs in the mutation.
-func (m *UserMutation) LikesIDs() (ids []uuid.UUID) {
-	for id := range m.likes {
+// UserCuriositiesIDs returns the "user_curiosities" edge IDs in the mutation.
+func (m *UserMutation) UserCuriositiesIDs() (ids []uuid.UUID) {
+	for id := range m.user_curiosities {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetLikes resets all changes to the "likes" edge.
-func (m *UserMutation) ResetLikes() {
-	m.likes = nil
-	m.clearedlikes = false
-	m.removedlikes = nil
-}
-
-// AddViewIDs adds the "views" edge to the View entity by ids.
-func (m *UserMutation) AddViewIDs(ids ...uuid.UUID) {
-	if m.views == nil {
-		m.views = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.views[ids[i]] = struct{}{}
-	}
-}
-
-// ClearViews clears the "views" edge to the View entity.
-func (m *UserMutation) ClearViews() {
-	m.clearedviews = true
-}
-
-// ViewsCleared reports if the "views" edge to the View entity was cleared.
-func (m *UserMutation) ViewsCleared() bool {
-	return m.clearedviews
-}
-
-// RemoveViewIDs removes the "views" edge to the View entity by IDs.
-func (m *UserMutation) RemoveViewIDs(ids ...uuid.UUID) {
-	if m.removedviews == nil {
-		m.removedviews = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.views, ids[i])
-		m.removedviews[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedViews returns the removed IDs of the "views" edge to the View entity.
-func (m *UserMutation) RemovedViewsIDs() (ids []uuid.UUID) {
-	for id := range m.removedviews {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ViewsIDs returns the "views" edge IDs in the mutation.
-func (m *UserMutation) ViewsIDs() (ids []uuid.UUID) {
-	for id := range m.views {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetViews resets all changes to the "views" edge.
-func (m *UserMutation) ResetViews() {
-	m.views = nil
-	m.clearedviews = false
-	m.removedviews = nil
+// ResetUserCuriosities resets all changes to the "user_curiosities" edge.
+func (m *UserMutation) ResetUserCuriosities() {
+	m.user_curiosities = nil
+	m.cleareduser_curiosities = false
+	m.removeduser_curiosities = nil
 }
 
 // Where appends a list predicates to the UserMutation builder.
@@ -2513,13 +1859,13 @@ func (m *UserMutation) Fields() []string {
 	if m.tier != nil {
 		fields = append(fields, user.FieldTier)
 	}
-	if m.subscriptionExpiresAt != nil {
+	if m.subscription_expires_at != nil {
 		fields = append(fields, user.FieldSubscriptionExpiresAt)
 	}
-	if m.createdAt != nil {
+	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
-	if m.updatedAt != nil {
+	if m.updated_at != nil {
 		fields = append(fields, user.FieldUpdatedAt)
 	}
 	return fields
@@ -2696,15 +2042,12 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.pets != nil {
 		edges = append(edges, user.EdgePets)
 	}
-	if m.likes != nil {
-		edges = append(edges, user.EdgeLikes)
-	}
-	if m.views != nil {
-		edges = append(edges, user.EdgeViews)
+	if m.user_curiosities != nil {
+		edges = append(edges, user.EdgeUserCuriosities)
 	}
 	return edges
 }
@@ -2719,15 +2062,9 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case user.EdgeLikes:
-		ids := make([]ent.Value, 0, len(m.likes))
-		for id := range m.likes {
-			ids = append(ids, id)
-		}
-		return ids
-	case user.EdgeViews:
-		ids := make([]ent.Value, 0, len(m.views))
-		for id := range m.views {
+	case user.EdgeUserCuriosities:
+		ids := make([]ent.Value, 0, len(m.user_curiosities))
+		for id := range m.user_curiosities {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2737,15 +2074,12 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.removedpets != nil {
 		edges = append(edges, user.EdgePets)
 	}
-	if m.removedlikes != nil {
-		edges = append(edges, user.EdgeLikes)
-	}
-	if m.removedviews != nil {
-		edges = append(edges, user.EdgeViews)
+	if m.removeduser_curiosities != nil {
+		edges = append(edges, user.EdgeUserCuriosities)
 	}
 	return edges
 }
@@ -2760,15 +2094,9 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case user.EdgeLikes:
-		ids := make([]ent.Value, 0, len(m.removedlikes))
-		for id := range m.removedlikes {
-			ids = append(ids, id)
-		}
-		return ids
-	case user.EdgeViews:
-		ids := make([]ent.Value, 0, len(m.removedviews))
-		for id := range m.removedviews {
+	case user.EdgeUserCuriosities:
+		ids := make([]ent.Value, 0, len(m.removeduser_curiosities))
+		for id := range m.removeduser_curiosities {
 			ids = append(ids, id)
 		}
 		return ids
@@ -2778,15 +2106,12 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.clearedpets {
 		edges = append(edges, user.EdgePets)
 	}
-	if m.clearedlikes {
-		edges = append(edges, user.EdgeLikes)
-	}
-	if m.clearedviews {
-		edges = append(edges, user.EdgeViews)
+	if m.cleareduser_curiosities {
+		edges = append(edges, user.EdgeUserCuriosities)
 	}
 	return edges
 }
@@ -2797,10 +2122,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 	switch name {
 	case user.EdgePets:
 		return m.clearedpets
-	case user.EdgeLikes:
-		return m.clearedlikes
-	case user.EdgeViews:
-		return m.clearedviews
+	case user.EdgeUserCuriosities:
+		return m.cleareduser_curiosities
 	}
 	return false
 }
@@ -2820,44 +2143,43 @@ func (m *UserMutation) ResetEdge(name string) error {
 	case user.EdgePets:
 		m.ResetPets()
 		return nil
-	case user.EdgeLikes:
-		m.ResetLikes()
-		return nil
-	case user.EdgeViews:
-		m.ResetViews()
+	case user.EdgeUserCuriosities:
+		m.ResetUserCuriosities()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
 }
 
-// ViewMutation represents an operation that mutates the View nodes in the graph.
-type ViewMutation struct {
+// UserCuriosityMutation represents an operation that mutates the UserCuriosity nodes in the graph.
+type UserCuriosityMutation struct {
 	config
 	op               Op
 	typ              string
 	id               *uuid.UUID
-	createdAt        *time.Time
+	viewed           *bool
+	liked            *bool
+	created_at       *time.Time
 	clearedFields    map[string]struct{}
 	user             *uuid.UUID
 	cleareduser      bool
 	curiosity        *uuid.UUID
 	clearedcuriosity bool
 	done             bool
-	oldValue         func(context.Context) (*View, error)
-	predicates       []predicate.View
+	oldValue         func(context.Context) (*UserCuriosity, error)
+	predicates       []predicate.UserCuriosity
 }
 
-var _ ent.Mutation = (*ViewMutation)(nil)
+var _ ent.Mutation = (*UserCuriosityMutation)(nil)
 
-// viewOption allows management of the mutation configuration using functional options.
-type viewOption func(*ViewMutation)
+// usercuriosityOption allows management of the mutation configuration using functional options.
+type usercuriosityOption func(*UserCuriosityMutation)
 
-// newViewMutation creates new mutation for the View entity.
-func newViewMutation(c config, op Op, opts ...viewOption) *ViewMutation {
-	m := &ViewMutation{
+// newUserCuriosityMutation creates new mutation for the UserCuriosity entity.
+func newUserCuriosityMutation(c config, op Op, opts ...usercuriosityOption) *UserCuriosityMutation {
+	m := &UserCuriosityMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeView,
+		typ:           TypeUserCuriosity,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -2866,20 +2188,20 @@ func newViewMutation(c config, op Op, opts ...viewOption) *ViewMutation {
 	return m
 }
 
-// withViewID sets the ID field of the mutation.
-func withViewID(id uuid.UUID) viewOption {
-	return func(m *ViewMutation) {
+// withUserCuriosityID sets the ID field of the mutation.
+func withUserCuriosityID(id uuid.UUID) usercuriosityOption {
+	return func(m *UserCuriosityMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *View
+			value *UserCuriosity
 		)
-		m.oldValue = func(ctx context.Context) (*View, error) {
+		m.oldValue = func(ctx context.Context) (*UserCuriosity, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().View.Get(ctx, id)
+					value, err = m.Client().UserCuriosity.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -2888,10 +2210,10 @@ func withViewID(id uuid.UUID) viewOption {
 	}
 }
 
-// withView sets the old View of the mutation.
-func withView(node *View) viewOption {
-	return func(m *ViewMutation) {
-		m.oldValue = func(context.Context) (*View, error) {
+// withUserCuriosity sets the old UserCuriosity of the mutation.
+func withUserCuriosity(node *UserCuriosity) usercuriosityOption {
+	return func(m *UserCuriosityMutation) {
+		m.oldValue = func(context.Context) (*UserCuriosity, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -2900,7 +2222,7 @@ func withView(node *View) viewOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m ViewMutation) Client() *Client {
+func (m UserCuriosityMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -2908,7 +2230,7 @@ func (m ViewMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m ViewMutation) Tx() (*Tx, error) {
+func (m UserCuriosityMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -2918,14 +2240,14 @@ func (m ViewMutation) Tx() (*Tx, error) {
 }
 
 // SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of View entities.
-func (m *ViewMutation) SetID(id uuid.UUID) {
+// operation is only accepted on creation of UserCuriosity entities.
+func (m *UserCuriosityMutation) SetID(id uuid.UUID) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *ViewMutation) ID() (id uuid.UUID, exists bool) {
+func (m *UserCuriosityMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -2936,7 +2258,7 @@ func (m *ViewMutation) ID() (id uuid.UUID, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *ViewMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+func (m *UserCuriosityMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
@@ -2945,30 +2267,102 @@ func (m *ViewMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().View.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().UserCuriosity.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
-// SetCreatedAt sets the "createdAt" field.
-func (m *ViewMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
+// SetViewed sets the "viewed" field.
+func (m *UserCuriosityMutation) SetViewed(b bool) {
+	m.viewed = &b
 }
 
-// CreatedAt returns the value of the "createdAt" field in the mutation.
-func (m *ViewMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
+// Viewed returns the value of the "viewed" field in the mutation.
+func (m *UserCuriosityMutation) Viewed() (r bool, exists bool) {
+	v := m.viewed
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "createdAt" field's value of the View entity.
-// If the View object wasn't provided to the builder, the object is fetched from the database.
+// OldViewed returns the old "viewed" field's value of the UserCuriosity entity.
+// If the UserCuriosity object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ViewMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+func (m *UserCuriosityMutation) OldViewed(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldViewed is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldViewed requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldViewed: %w", err)
+	}
+	return oldValue.Viewed, nil
+}
+
+// ResetViewed resets all changes to the "viewed" field.
+func (m *UserCuriosityMutation) ResetViewed() {
+	m.viewed = nil
+}
+
+// SetLiked sets the "liked" field.
+func (m *UserCuriosityMutation) SetLiked(b bool) {
+	m.liked = &b
+}
+
+// Liked returns the value of the "liked" field in the mutation.
+func (m *UserCuriosityMutation) Liked() (r bool, exists bool) {
+	v := m.liked
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLiked returns the old "liked" field's value of the UserCuriosity entity.
+// If the UserCuriosity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserCuriosityMutation) OldLiked(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLiked is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLiked requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLiked: %w", err)
+	}
+	return oldValue.Liked, nil
+}
+
+// ResetLiked resets all changes to the "liked" field.
+func (m *UserCuriosityMutation) ResetLiked() {
+	m.liked = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *UserCuriosityMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *UserCuriosityMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the UserCuriosity entity.
+// If the UserCuriosity object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserCuriosityMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
 	}
@@ -2982,28 +2376,28 @@ func (m *ViewMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error
 	return oldValue.CreatedAt, nil
 }
 
-// ResetCreatedAt resets all changes to the "createdAt" field.
-func (m *ViewMutation) ResetCreatedAt() {
-	m.createdAt = nil
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *UserCuriosityMutation) ResetCreatedAt() {
+	m.created_at = nil
 }
 
 // SetUserID sets the "user" edge to the User entity by id.
-func (m *ViewMutation) SetUserID(id uuid.UUID) {
+func (m *UserCuriosityMutation) SetUserID(id uuid.UUID) {
 	m.user = &id
 }
 
 // ClearUser clears the "user" edge to the User entity.
-func (m *ViewMutation) ClearUser() {
+func (m *UserCuriosityMutation) ClearUser() {
 	m.cleareduser = true
 }
 
 // UserCleared reports if the "user" edge to the User entity was cleared.
-func (m *ViewMutation) UserCleared() bool {
+func (m *UserCuriosityMutation) UserCleared() bool {
 	return m.cleareduser
 }
 
 // UserID returns the "user" edge ID in the mutation.
-func (m *ViewMutation) UserID() (id uuid.UUID, exists bool) {
+func (m *UserCuriosityMutation) UserID() (id uuid.UUID, exists bool) {
 	if m.user != nil {
 		return *m.user, true
 	}
@@ -3013,7 +2407,7 @@ func (m *ViewMutation) UserID() (id uuid.UUID, exists bool) {
 // UserIDs returns the "user" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // UserID instead. It exists only for internal usage by the builders.
-func (m *ViewMutation) UserIDs() (ids []uuid.UUID) {
+func (m *UserCuriosityMutation) UserIDs() (ids []uuid.UUID) {
 	if id := m.user; id != nil {
 		ids = append(ids, *id)
 	}
@@ -3021,28 +2415,28 @@ func (m *ViewMutation) UserIDs() (ids []uuid.UUID) {
 }
 
 // ResetUser resets all changes to the "user" edge.
-func (m *ViewMutation) ResetUser() {
+func (m *UserCuriosityMutation) ResetUser() {
 	m.user = nil
 	m.cleareduser = false
 }
 
 // SetCuriosityID sets the "curiosity" edge to the Curiosity entity by id.
-func (m *ViewMutation) SetCuriosityID(id uuid.UUID) {
+func (m *UserCuriosityMutation) SetCuriosityID(id uuid.UUID) {
 	m.curiosity = &id
 }
 
 // ClearCuriosity clears the "curiosity" edge to the Curiosity entity.
-func (m *ViewMutation) ClearCuriosity() {
+func (m *UserCuriosityMutation) ClearCuriosity() {
 	m.clearedcuriosity = true
 }
 
 // CuriosityCleared reports if the "curiosity" edge to the Curiosity entity was cleared.
-func (m *ViewMutation) CuriosityCleared() bool {
+func (m *UserCuriosityMutation) CuriosityCleared() bool {
 	return m.clearedcuriosity
 }
 
 // CuriosityID returns the "curiosity" edge ID in the mutation.
-func (m *ViewMutation) CuriosityID() (id uuid.UUID, exists bool) {
+func (m *UserCuriosityMutation) CuriosityID() (id uuid.UUID, exists bool) {
 	if m.curiosity != nil {
 		return *m.curiosity, true
 	}
@@ -3052,7 +2446,7 @@ func (m *ViewMutation) CuriosityID() (id uuid.UUID, exists bool) {
 // CuriosityIDs returns the "curiosity" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // CuriosityID instead. It exists only for internal usage by the builders.
-func (m *ViewMutation) CuriosityIDs() (ids []uuid.UUID) {
+func (m *UserCuriosityMutation) CuriosityIDs() (ids []uuid.UUID) {
 	if id := m.curiosity; id != nil {
 		ids = append(ids, *id)
 	}
@@ -3060,20 +2454,20 @@ func (m *ViewMutation) CuriosityIDs() (ids []uuid.UUID) {
 }
 
 // ResetCuriosity resets all changes to the "curiosity" edge.
-func (m *ViewMutation) ResetCuriosity() {
+func (m *UserCuriosityMutation) ResetCuriosity() {
 	m.curiosity = nil
 	m.clearedcuriosity = false
 }
 
-// Where appends a list predicates to the ViewMutation builder.
-func (m *ViewMutation) Where(ps ...predicate.View) {
+// Where appends a list predicates to the UserCuriosityMutation builder.
+func (m *UserCuriosityMutation) Where(ps ...predicate.UserCuriosity) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the ViewMutation builder. Using this method,
+// WhereP appends storage-level predicates to the UserCuriosityMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *ViewMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.View, len(ps))
+func (m *UserCuriosityMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.UserCuriosity, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -3081,27 +2475,33 @@ func (m *ViewMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *ViewMutation) Op() Op {
+func (m *UserCuriosityMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *ViewMutation) SetOp(op Op) {
+func (m *UserCuriosityMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (View).
-func (m *ViewMutation) Type() string {
+// Type returns the node type of this mutation (UserCuriosity).
+func (m *UserCuriosityMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *ViewMutation) Fields() []string {
-	fields := make([]string, 0, 1)
-	if m.createdAt != nil {
-		fields = append(fields, view.FieldCreatedAt)
+func (m *UserCuriosityMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.viewed != nil {
+		fields = append(fields, usercuriosity.FieldViewed)
+	}
+	if m.liked != nil {
+		fields = append(fields, usercuriosity.FieldLiked)
+	}
+	if m.created_at != nil {
+		fields = append(fields, usercuriosity.FieldCreatedAt)
 	}
 	return fields
 }
@@ -3109,9 +2509,13 @@ func (m *ViewMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *ViewMutation) Field(name string) (ent.Value, bool) {
+func (m *UserCuriosityMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case view.FieldCreatedAt:
+	case usercuriosity.FieldViewed:
+		return m.Viewed()
+	case usercuriosity.FieldLiked:
+		return m.Liked()
+	case usercuriosity.FieldCreatedAt:
 		return m.CreatedAt()
 	}
 	return nil, false
@@ -3120,20 +2524,38 @@ func (m *ViewMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *ViewMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *UserCuriosityMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case view.FieldCreatedAt:
+	case usercuriosity.FieldViewed:
+		return m.OldViewed(ctx)
+	case usercuriosity.FieldLiked:
+		return m.OldLiked(ctx)
+	case usercuriosity.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
-	return nil, fmt.Errorf("unknown View field %s", name)
+	return nil, fmt.Errorf("unknown UserCuriosity field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *ViewMutation) SetField(name string, value ent.Value) error {
+func (m *UserCuriosityMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case view.FieldCreatedAt:
+	case usercuriosity.FieldViewed:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetViewed(v)
+		return nil
+	case usercuriosity.FieldLiked:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLiked(v)
+		return nil
+	case usercuriosity.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
@@ -3141,82 +2563,88 @@ func (m *ViewMutation) SetField(name string, value ent.Value) error {
 		m.SetCreatedAt(v)
 		return nil
 	}
-	return fmt.Errorf("unknown View field %s", name)
+	return fmt.Errorf("unknown UserCuriosity field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *ViewMutation) AddedFields() []string {
+func (m *UserCuriosityMutation) AddedFields() []string {
 	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *ViewMutation) AddedField(name string) (ent.Value, bool) {
+func (m *UserCuriosityMutation) AddedField(name string) (ent.Value, bool) {
 	return nil, false
 }
 
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *ViewMutation) AddField(name string, value ent.Value) error {
+func (m *UserCuriosityMutation) AddField(name string, value ent.Value) error {
 	switch name {
 	}
-	return fmt.Errorf("unknown View numeric field %s", name)
+	return fmt.Errorf("unknown UserCuriosity numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *ViewMutation) ClearedFields() []string {
+func (m *UserCuriosityMutation) ClearedFields() []string {
 	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *ViewMutation) FieldCleared(name string) bool {
+func (m *UserCuriosityMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *ViewMutation) ClearField(name string) error {
-	return fmt.Errorf("unknown View nullable field %s", name)
+func (m *UserCuriosityMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown UserCuriosity nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *ViewMutation) ResetField(name string) error {
+func (m *UserCuriosityMutation) ResetField(name string) error {
 	switch name {
-	case view.FieldCreatedAt:
+	case usercuriosity.FieldViewed:
+		m.ResetViewed()
+		return nil
+	case usercuriosity.FieldLiked:
+		m.ResetLiked()
+		return nil
+	case usercuriosity.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
 	}
-	return fmt.Errorf("unknown View field %s", name)
+	return fmt.Errorf("unknown UserCuriosity field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *ViewMutation) AddedEdges() []string {
+func (m *UserCuriosityMutation) AddedEdges() []string {
 	edges := make([]string, 0, 2)
 	if m.user != nil {
-		edges = append(edges, view.EdgeUser)
+		edges = append(edges, usercuriosity.EdgeUser)
 	}
 	if m.curiosity != nil {
-		edges = append(edges, view.EdgeCuriosity)
+		edges = append(edges, usercuriosity.EdgeCuriosity)
 	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *ViewMutation) AddedIDs(name string) []ent.Value {
+func (m *UserCuriosityMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case view.EdgeUser:
+	case usercuriosity.EdgeUser:
 		if id := m.user; id != nil {
 			return []ent.Value{*id}
 		}
-	case view.EdgeCuriosity:
+	case usercuriosity.EdgeCuriosity:
 		if id := m.curiosity; id != nil {
 			return []ent.Value{*id}
 		}
@@ -3225,36 +2653,36 @@ func (m *ViewMutation) AddedIDs(name string) []ent.Value {
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *ViewMutation) RemovedEdges() []string {
+func (m *UserCuriosityMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *ViewMutation) RemovedIDs(name string) []ent.Value {
+func (m *UserCuriosityMutation) RemovedIDs(name string) []ent.Value {
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *ViewMutation) ClearedEdges() []string {
+func (m *UserCuriosityMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 2)
 	if m.cleareduser {
-		edges = append(edges, view.EdgeUser)
+		edges = append(edges, usercuriosity.EdgeUser)
 	}
 	if m.clearedcuriosity {
-		edges = append(edges, view.EdgeCuriosity)
+		edges = append(edges, usercuriosity.EdgeCuriosity)
 	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *ViewMutation) EdgeCleared(name string) bool {
+func (m *UserCuriosityMutation) EdgeCleared(name string) bool {
 	switch name {
-	case view.EdgeUser:
+	case usercuriosity.EdgeUser:
 		return m.cleareduser
-	case view.EdgeCuriosity:
+	case usercuriosity.EdgeCuriosity:
 		return m.clearedcuriosity
 	}
 	return false
@@ -3262,28 +2690,28 @@ func (m *ViewMutation) EdgeCleared(name string) bool {
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *ViewMutation) ClearEdge(name string) error {
+func (m *UserCuriosityMutation) ClearEdge(name string) error {
 	switch name {
-	case view.EdgeUser:
+	case usercuriosity.EdgeUser:
 		m.ClearUser()
 		return nil
-	case view.EdgeCuriosity:
+	case usercuriosity.EdgeCuriosity:
 		m.ClearCuriosity()
 		return nil
 	}
-	return fmt.Errorf("unknown View unique edge %s", name)
+	return fmt.Errorf("unknown UserCuriosity unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *ViewMutation) ResetEdge(name string) error {
+func (m *UserCuriosityMutation) ResetEdge(name string) error {
 	switch name {
-	case view.EdgeUser:
+	case usercuriosity.EdgeUser:
 		m.ResetUser()
 		return nil
-	case view.EdgeCuriosity:
+	case usercuriosity.EdgeCuriosity:
 		m.ResetCuriosity()
 		return nil
 	}
-	return fmt.Errorf("unknown View edge %s", name)
+	return fmt.Errorf("unknown UserCuriosity edge %s", name)
 }

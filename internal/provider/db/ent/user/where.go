@@ -66,17 +66,17 @@ func Email(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldEmail, v))
 }
 
-// SubscriptionExpiresAt applies equality check predicate on the "subscriptionExpiresAt" field. It's identical to SubscriptionExpiresAtEQ.
+// SubscriptionExpiresAt applies equality check predicate on the "subscription_expires_at" field. It's identical to SubscriptionExpiresAtEQ.
 func SubscriptionExpiresAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldSubscriptionExpiresAt, v))
 }
 
-// CreatedAt applies equality check predicate on the "createdAt" field. It's identical to CreatedAtEQ.
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
 }
 
-// UpdatedAt applies equality check predicate on the "updatedAt" field. It's identical to UpdatedAtEQ.
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldUpdatedAt, v))
 }
@@ -231,132 +231,132 @@ func TierNotIn(vs ...Tier) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldTier, vs...))
 }
 
-// SubscriptionExpiresAtEQ applies the EQ predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtEQ applies the EQ predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldSubscriptionExpiresAt, v))
 }
 
-// SubscriptionExpiresAtNEQ applies the NEQ predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtNEQ applies the NEQ predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtNEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldSubscriptionExpiresAt, v))
 }
 
-// SubscriptionExpiresAtIn applies the In predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtIn applies the In predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtIn(vs ...time.Time) predicate.User {
 	return predicate.User(sql.FieldIn(FieldSubscriptionExpiresAt, vs...))
 }
 
-// SubscriptionExpiresAtNotIn applies the NotIn predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtNotIn applies the NotIn predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtNotIn(vs ...time.Time) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldSubscriptionExpiresAt, vs...))
 }
 
-// SubscriptionExpiresAtGT applies the GT predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtGT applies the GT predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtGT(v time.Time) predicate.User {
 	return predicate.User(sql.FieldGT(FieldSubscriptionExpiresAt, v))
 }
 
-// SubscriptionExpiresAtGTE applies the GTE predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtGTE applies the GTE predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtGTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldGTE(FieldSubscriptionExpiresAt, v))
 }
 
-// SubscriptionExpiresAtLT applies the LT predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtLT applies the LT predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtLT(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLT(FieldSubscriptionExpiresAt, v))
 }
 
-// SubscriptionExpiresAtLTE applies the LTE predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtLTE applies the LTE predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldSubscriptionExpiresAt, v))
 }
 
-// SubscriptionExpiresAtIsNil applies the IsNil predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtIsNil applies the IsNil predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtIsNil() predicate.User {
 	return predicate.User(sql.FieldIsNull(FieldSubscriptionExpiresAt))
 }
 
-// SubscriptionExpiresAtNotNil applies the NotNil predicate on the "subscriptionExpiresAt" field.
+// SubscriptionExpiresAtNotNil applies the NotNil predicate on the "subscription_expires_at" field.
 func SubscriptionExpiresAtNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldSubscriptionExpiresAt))
 }
 
-// CreatedAtEQ applies the EQ predicate on the "createdAt" field.
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
 }
 
-// CreatedAtNEQ applies the NEQ predicate on the "createdAt" field.
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
 func CreatedAtNEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldCreatedAt, v))
 }
 
-// CreatedAtIn applies the In predicate on the "createdAt" field.
+// CreatedAtIn applies the In predicate on the "created_at" field.
 func CreatedAtIn(vs ...time.Time) predicate.User {
 	return predicate.User(sql.FieldIn(FieldCreatedAt, vs...))
 }
 
-// CreatedAtNotIn applies the NotIn predicate on the "createdAt" field.
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
 func CreatedAtNotIn(vs ...time.Time) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldCreatedAt, vs...))
 }
 
-// CreatedAtGT applies the GT predicate on the "createdAt" field.
+// CreatedAtGT applies the GT predicate on the "created_at" field.
 func CreatedAtGT(v time.Time) predicate.User {
 	return predicate.User(sql.FieldGT(FieldCreatedAt, v))
 }
 
-// CreatedAtGTE applies the GTE predicate on the "createdAt" field.
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
 func CreatedAtGTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldGTE(FieldCreatedAt, v))
 }
 
-// CreatedAtLT applies the LT predicate on the "createdAt" field.
+// CreatedAtLT applies the LT predicate on the "created_at" field.
 func CreatedAtLT(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLT(FieldCreatedAt, v))
 }
 
-// CreatedAtLTE applies the LTE predicate on the "createdAt" field.
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
 func CreatedAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldCreatedAt, v))
 }
 
-// UpdatedAtEQ applies the EQ predicate on the "updatedAt" field.
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
 func UpdatedAtEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// UpdatedAtNEQ applies the NEQ predicate on the "updatedAt" field.
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
 func UpdatedAtNEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldUpdatedAt, v))
 }
 
-// UpdatedAtIn applies the In predicate on the "updatedAt" field.
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
 func UpdatedAtIn(vs ...time.Time) predicate.User {
 	return predicate.User(sql.FieldIn(FieldUpdatedAt, vs...))
 }
 
-// UpdatedAtNotIn applies the NotIn predicate on the "updatedAt" field.
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
 func UpdatedAtNotIn(vs ...time.Time) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldUpdatedAt, vs...))
 }
 
-// UpdatedAtGT applies the GT predicate on the "updatedAt" field.
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
 func UpdatedAtGT(v time.Time) predicate.User {
 	return predicate.User(sql.FieldGT(FieldUpdatedAt, v))
 }
 
-// UpdatedAtGTE applies the GTE predicate on the "updatedAt" field.
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
 func UpdatedAtGTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldGTE(FieldUpdatedAt, v))
 }
 
-// UpdatedAtLT applies the LT predicate on the "updatedAt" field.
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
 func UpdatedAtLT(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLT(FieldUpdatedAt, v))
 }
 
-// UpdatedAtLTE applies the LTE predicate on the "updatedAt" field.
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldUpdatedAt, v))
 }
@@ -384,44 +384,21 @@ func HasPetsWith(preds ...predicate.Pet) predicate.User {
 	})
 }
 
-// HasLikes applies the HasEdge predicate on the "likes" edge.
-func HasLikes() predicate.User {
+// HasUserCuriosities applies the HasEdge predicate on the "user_curiosities" edge.
+func HasUserCuriosities() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, LikesTable, LikesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, UserCuriositiesTable, UserCuriositiesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasLikesWith applies the HasEdge predicate on the "likes" edge with a given conditions (other predicates).
-func HasLikesWith(preds ...predicate.Like) predicate.User {
+// HasUserCuriositiesWith applies the HasEdge predicate on the "user_curiosities" edge with a given conditions (other predicates).
+func HasUserCuriositiesWith(preds ...predicate.UserCuriosity) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newLikesStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasViews applies the HasEdge predicate on the "views" edge.
-func HasViews() predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, ViewsTable, ViewsColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasViewsWith applies the HasEdge predicate on the "views" edge with a given conditions (other predicates).
-func HasViewsWith(preds ...predicate.View) predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := newViewsStep()
+		step := newUserCuriositiesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

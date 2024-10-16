@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/danielmesquitta/api-pet-curiosities/internal/pkg/fmtutil"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
 )
@@ -126,13 +125,10 @@ func CreateDogs(
 		return err
 	}
 
-	for _, breed := range dogBreeds {
-		searchableBreed := fmtutil.ToSearchable(breed)
-
+	for _, dogBreed := range dogBreeds {
 		_, err := tx.Pet.Create().
 			SetSpecie(pet.SpecieDOG).
-			SetBreed(breed).
-			SetSearch(searchableBreed).
+			SetBreed(dogBreed).
 			Save(ctx)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
@@ -162,13 +158,10 @@ func CreateCats(
 		return err
 	}
 
-	for _, breed := range catBreeds {
-		searchableBreed := fmtutil.ToSearchable(breed)
-
+	for _, catBreed := range catBreeds {
 		_, err := tx.Pet.Create().
 			SetSpecie(pet.SpecieCAT).
-			SetBreed(breed).
-			SetSearch(searchableBreed).
+			SetBreed(catBreed).
 			Save(ctx)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {

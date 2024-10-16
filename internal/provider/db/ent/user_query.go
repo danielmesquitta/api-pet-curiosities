@@ -12,24 +12,22 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/like"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/predicate"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/user"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/view"
+	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/usercuriosity"
 	"github.com/google/uuid"
 )
 
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx        *QueryContext
-	order      []user.OrderOption
-	inters     []Interceptor
-	predicates []predicate.User
-	withPets   *PetQuery
-	withLikes  *LikeQuery
-	withViews  *ViewQuery
+	ctx                 *QueryContext
+	order               []user.OrderOption
+	inters              []Interceptor
+	predicates          []predicate.User
+	withPets            *PetQuery
+	withUserCuriosities *UserCuriosityQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -88,9 +86,9 @@ func (uq *UserQuery) QueryPets() *PetQuery {
 	return query
 }
 
-// QueryLikes chains the current query on the "likes" edge.
-func (uq *UserQuery) QueryLikes() *LikeQuery {
-	query := (&LikeClient{config: uq.config}).Query()
+// QueryUserCuriosities chains the current query on the "user_curiosities" edge.
+func (uq *UserQuery) QueryUserCuriosities() *UserCuriosityQuery {
+	query := (&UserCuriosityClient{config: uq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := uq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -101,30 +99,8 @@ func (uq *UserQuery) QueryLikes() *LikeQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(like.Table, like.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.LikesTable, user.LikesColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryViews chains the current query on the "views" edge.
-func (uq *UserQuery) QueryViews() *ViewQuery {
-	query := (&ViewClient{config: uq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := uq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := uq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(view.Table, view.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.ViewsTable, user.ViewsColumn),
+			sqlgraph.To(usercuriosity.Table, usercuriosity.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.UserCuriositiesTable, user.UserCuriositiesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -319,14 +295,13 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:     uq.config,
-		ctx:        uq.ctx.Clone(),
-		order:      append([]user.OrderOption{}, uq.order...),
-		inters:     append([]Interceptor{}, uq.inters...),
-		predicates: append([]predicate.User{}, uq.predicates...),
-		withPets:   uq.withPets.Clone(),
-		withLikes:  uq.withLikes.Clone(),
-		withViews:  uq.withViews.Clone(),
+		config:              uq.config,
+		ctx:                 uq.ctx.Clone(),
+		order:               append([]user.OrderOption{}, uq.order...),
+		inters:              append([]Interceptor{}, uq.inters...),
+		predicates:          append([]predicate.User{}, uq.predicates...),
+		withPets:            uq.withPets.Clone(),
+		withUserCuriosities: uq.withUserCuriosities.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -344,25 +319,14 @@ func (uq *UserQuery) WithPets(opts ...func(*PetQuery)) *UserQuery {
 	return uq
 }
 
-// WithLikes tells the query-builder to eager-load the nodes that are connected to
-// the "likes" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithLikes(opts ...func(*LikeQuery)) *UserQuery {
-	query := (&LikeClient{config: uq.config}).Query()
+// WithUserCuriosities tells the query-builder to eager-load the nodes that are connected to
+// the "user_curiosities" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithUserCuriosities(opts ...func(*UserCuriosityQuery)) *UserQuery {
+	query := (&UserCuriosityClient{config: uq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	uq.withLikes = query
-	return uq
-}
-
-// WithViews tells the query-builder to eager-load the nodes that are connected to
-// the "views" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithViews(opts ...func(*ViewQuery)) *UserQuery {
-	query := (&ViewClient{config: uq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	uq.withViews = query
+	uq.withUserCuriosities = query
 	return uq
 }
 
@@ -444,10 +408,9 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [2]bool{
 			uq.withPets != nil,
-			uq.withLikes != nil,
-			uq.withViews != nil,
+			uq.withUserCuriosities != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -475,17 +438,10 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
-	if query := uq.withLikes; query != nil {
-		if err := uq.loadLikes(ctx, query, nodes,
-			func(n *User) { n.Edges.Likes = []*Like{} },
-			func(n *User, e *Like) { n.Edges.Likes = append(n.Edges.Likes, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := uq.withViews; query != nil {
-		if err := uq.loadViews(ctx, query, nodes,
-			func(n *User) { n.Edges.Views = []*View{} },
-			func(n *User, e *View) { n.Edges.Views = append(n.Edges.Views, e) }); err != nil {
+	if query := uq.withUserCuriosities; query != nil {
+		if err := uq.loadUserCuriosities(ctx, query, nodes,
+			func(n *User) { n.Edges.UserCuriosities = []*UserCuriosity{} },
+			func(n *User, e *UserCuriosity) { n.Edges.UserCuriosities = append(n.Edges.UserCuriosities, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -553,7 +509,7 @@ func (uq *UserQuery) loadPets(ctx context.Context, query *PetQuery, nodes []*Use
 	}
 	return nil
 }
-func (uq *UserQuery) loadLikes(ctx context.Context, query *LikeQuery, nodes []*User, init func(*User), assign func(*User, *Like)) error {
+func (uq *UserQuery) loadUserCuriosities(ctx context.Context, query *UserCuriosityQuery, nodes []*User, init func(*User), assign func(*User, *UserCuriosity)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*User)
 	for i := range nodes {
@@ -564,39 +520,8 @@ func (uq *UserQuery) loadLikes(ctx context.Context, query *LikeQuery, nodes []*U
 		}
 	}
 	query.withFKs = true
-	query.Where(predicate.Like(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.LikesColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.user_id
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
-func (uq *UserQuery) loadViews(ctx context.Context, query *ViewQuery, nodes []*User, init func(*User), assign func(*User, *View)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*User)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	query.withFKs = true
-	query.Where(predicate.View(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.ViewsColumn), fks...))
+	query.Where(predicate.UserCuriosity(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.UserCuriositiesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

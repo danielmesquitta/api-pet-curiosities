@@ -21,18 +21,6 @@ func (f CuriosityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CuriosityMutation", m)
 }
 
-// The LikeFunc type is an adapter to allow the use of ordinary
-// function as Like mutator.
-type LikeFunc func(context.Context, *ent.LikeMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f LikeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.LikeMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LikeMutation", m)
-}
-
 // The PetFunc type is an adapter to allow the use of ordinary
 // function as Pet mutator.
 type PetFunc func(context.Context, *ent.PetMutation) (ent.Value, error)
@@ -57,16 +45,16 @@ func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
 }
 
-// The ViewFunc type is an adapter to allow the use of ordinary
-// function as View mutator.
-type ViewFunc func(context.Context, *ent.ViewMutation) (ent.Value, error)
+// The UserCuriosityFunc type is an adapter to allow the use of ordinary
+// function as UserCuriosity mutator.
+type UserCuriosityFunc func(context.Context, *ent.UserCuriosityMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f ViewFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.ViewMutation); ok {
+func (f UserCuriosityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UserCuriosityMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ViewMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserCuriosityMutation", m)
 }
 
 // Condition is a hook condition function.

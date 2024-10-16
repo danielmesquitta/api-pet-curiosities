@@ -61,17 +61,12 @@ func Breed(v string) predicate.Pet {
 	return predicate.Pet(sql.FieldEQ(FieldBreed, v))
 }
 
-// Search applies equality check predicate on the "search" field. It's identical to SearchEQ.
-func Search(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldEQ(FieldSearch, v))
-}
-
-// CreatedAt applies equality check predicate on the "createdAt" field. It's identical to CreatedAtEQ.
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldEQ(FieldCreatedAt, v))
 }
 
-// UpdatedAt applies equality check predicate on the "updatedAt" field. It's identical to UpdatedAtEQ.
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldEQ(FieldUpdatedAt, v))
 }
@@ -161,147 +156,82 @@ func BreedContainsFold(v string) predicate.Pet {
 	return predicate.Pet(sql.FieldContainsFold(FieldBreed, v))
 }
 
-// SearchEQ applies the EQ predicate on the "search" field.
-func SearchEQ(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldEQ(FieldSearch, v))
-}
-
-// SearchNEQ applies the NEQ predicate on the "search" field.
-func SearchNEQ(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldNEQ(FieldSearch, v))
-}
-
-// SearchIn applies the In predicate on the "search" field.
-func SearchIn(vs ...string) predicate.Pet {
-	return predicate.Pet(sql.FieldIn(FieldSearch, vs...))
-}
-
-// SearchNotIn applies the NotIn predicate on the "search" field.
-func SearchNotIn(vs ...string) predicate.Pet {
-	return predicate.Pet(sql.FieldNotIn(FieldSearch, vs...))
-}
-
-// SearchGT applies the GT predicate on the "search" field.
-func SearchGT(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldGT(FieldSearch, v))
-}
-
-// SearchGTE applies the GTE predicate on the "search" field.
-func SearchGTE(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldGTE(FieldSearch, v))
-}
-
-// SearchLT applies the LT predicate on the "search" field.
-func SearchLT(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldLT(FieldSearch, v))
-}
-
-// SearchLTE applies the LTE predicate on the "search" field.
-func SearchLTE(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldLTE(FieldSearch, v))
-}
-
-// SearchContains applies the Contains predicate on the "search" field.
-func SearchContains(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldContains(FieldSearch, v))
-}
-
-// SearchHasPrefix applies the HasPrefix predicate on the "search" field.
-func SearchHasPrefix(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldHasPrefix(FieldSearch, v))
-}
-
-// SearchHasSuffix applies the HasSuffix predicate on the "search" field.
-func SearchHasSuffix(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldHasSuffix(FieldSearch, v))
-}
-
-// SearchEqualFold applies the EqualFold predicate on the "search" field.
-func SearchEqualFold(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldEqualFold(FieldSearch, v))
-}
-
-// SearchContainsFold applies the ContainsFold predicate on the "search" field.
-func SearchContainsFold(v string) predicate.Pet {
-	return predicate.Pet(sql.FieldContainsFold(FieldSearch, v))
-}
-
-// CreatedAtEQ applies the EQ predicate on the "createdAt" field.
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldEQ(FieldCreatedAt, v))
 }
 
-// CreatedAtNEQ applies the NEQ predicate on the "createdAt" field.
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
 func CreatedAtNEQ(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldNEQ(FieldCreatedAt, v))
 }
 
-// CreatedAtIn applies the In predicate on the "createdAt" field.
+// CreatedAtIn applies the In predicate on the "created_at" field.
 func CreatedAtIn(vs ...time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldIn(FieldCreatedAt, vs...))
 }
 
-// CreatedAtNotIn applies the NotIn predicate on the "createdAt" field.
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
 func CreatedAtNotIn(vs ...time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldNotIn(FieldCreatedAt, vs...))
 }
 
-// CreatedAtGT applies the GT predicate on the "createdAt" field.
+// CreatedAtGT applies the GT predicate on the "created_at" field.
 func CreatedAtGT(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldGT(FieldCreatedAt, v))
 }
 
-// CreatedAtGTE applies the GTE predicate on the "createdAt" field.
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
 func CreatedAtGTE(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldGTE(FieldCreatedAt, v))
 }
 
-// CreatedAtLT applies the LT predicate on the "createdAt" field.
+// CreatedAtLT applies the LT predicate on the "created_at" field.
 func CreatedAtLT(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldLT(FieldCreatedAt, v))
 }
 
-// CreatedAtLTE applies the LTE predicate on the "createdAt" field.
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
 func CreatedAtLTE(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldLTE(FieldCreatedAt, v))
 }
 
-// UpdatedAtEQ applies the EQ predicate on the "updatedAt" field.
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
 func UpdatedAtEQ(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// UpdatedAtNEQ applies the NEQ predicate on the "updatedAt" field.
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
 func UpdatedAtNEQ(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldNEQ(FieldUpdatedAt, v))
 }
 
-// UpdatedAtIn applies the In predicate on the "updatedAt" field.
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
 func UpdatedAtIn(vs ...time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldIn(FieldUpdatedAt, vs...))
 }
 
-// UpdatedAtNotIn applies the NotIn predicate on the "updatedAt" field.
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
 func UpdatedAtNotIn(vs ...time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldNotIn(FieldUpdatedAt, vs...))
 }
 
-// UpdatedAtGT applies the GT predicate on the "updatedAt" field.
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
 func UpdatedAtGT(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldGT(FieldUpdatedAt, v))
 }
 
-// UpdatedAtGTE applies the GTE predicate on the "updatedAt" field.
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
 func UpdatedAtGTE(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldGTE(FieldUpdatedAt, v))
 }
 
-// UpdatedAtLT applies the LT predicate on the "updatedAt" field.
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
 func UpdatedAtLT(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldLT(FieldUpdatedAt, v))
 }
 
-// UpdatedAtLTE applies the LTE predicate on the "updatedAt" field.
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Pet {
 	return predicate.Pet(sql.FieldLTE(FieldUpdatedAt, v))
 }

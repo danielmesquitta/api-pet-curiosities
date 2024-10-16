@@ -22,9 +22,9 @@ func NewClient(env *config.Env) *Client {
 	}
 }
 
-func (o *Client) CreateChatCompletion(message string) (string, error) {
+func (o *Client) CreateChatCompletion(ctx context.Context, message string) (string, error) {
 	resp, err := o.openAIClient.CreateChatCompletion(
-		context.Background(),
+		ctx,
 		openai.ChatCompletionRequest{
 			Model: openai.GPT4oMini,
 			Messages: []openai.ChatCompletionMessage{

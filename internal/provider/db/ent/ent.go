@@ -13,10 +13,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/curiosity"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/like"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/user"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/view"
+	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/usercuriosity"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -77,11 +76,10 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			curiosity.Table: curiosity.ValidColumn,
-			like.Table:      like.ValidColumn,
-			pet.Table:       pet.ValidColumn,
-			user.Table:      user.ValidColumn,
-			view.Table:      view.ValidColumn,
+			curiosity.Table:     curiosity.ValidColumn,
+			pet.Table:           pet.ValidColumn,
+			user.Table:          user.ValidColumn,
+			usercuriosity.Table: usercuriosity.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

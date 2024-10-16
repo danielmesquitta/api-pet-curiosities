@@ -12,10 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/curiosity"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/like"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/predicate"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/view"
+	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/usercuriosity"
 	"github.com/google/uuid"
 )
 
@@ -60,7 +59,7 @@ func (cu *CuriosityUpdate) SetNillableContent(s *string) *CuriosityUpdate {
 	return cu
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (cu *CuriosityUpdate) SetUpdatedAt(t time.Time) *CuriosityUpdate {
 	cu.mutation.SetUpdatedAt(t)
 	return cu
@@ -85,34 +84,19 @@ func (cu *CuriosityUpdate) SetPet(p *Pet) *CuriosityUpdate {
 	return cu.SetPetID(p.ID)
 }
 
-// AddLikeIDs adds the "likes" edge to the Like entity by IDs.
-func (cu *CuriosityUpdate) AddLikeIDs(ids ...uuid.UUID) *CuriosityUpdate {
-	cu.mutation.AddLikeIDs(ids...)
+// AddUserCuriosityIDs adds the "user_curiosities" edge to the UserCuriosity entity by IDs.
+func (cu *CuriosityUpdate) AddUserCuriosityIDs(ids ...uuid.UUID) *CuriosityUpdate {
+	cu.mutation.AddUserCuriosityIDs(ids...)
 	return cu
 }
 
-// AddLikes adds the "likes" edges to the Like entity.
-func (cu *CuriosityUpdate) AddLikes(l ...*Like) *CuriosityUpdate {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// AddUserCuriosities adds the "user_curiosities" edges to the UserCuriosity entity.
+func (cu *CuriosityUpdate) AddUserCuriosities(u ...*UserCuriosity) *CuriosityUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return cu.AddLikeIDs(ids...)
-}
-
-// AddViewIDs adds the "views" edge to the View entity by IDs.
-func (cu *CuriosityUpdate) AddViewIDs(ids ...uuid.UUID) *CuriosityUpdate {
-	cu.mutation.AddViewIDs(ids...)
-	return cu
-}
-
-// AddViews adds the "views" edges to the View entity.
-func (cu *CuriosityUpdate) AddViews(v ...*View) *CuriosityUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return cu.AddViewIDs(ids...)
+	return cu.AddUserCuriosityIDs(ids...)
 }
 
 // Mutation returns the CuriosityMutation object of the builder.
@@ -126,46 +110,25 @@ func (cu *CuriosityUpdate) ClearPet() *CuriosityUpdate {
 	return cu
 }
 
-// ClearLikes clears all "likes" edges to the Like entity.
-func (cu *CuriosityUpdate) ClearLikes() *CuriosityUpdate {
-	cu.mutation.ClearLikes()
+// ClearUserCuriosities clears all "user_curiosities" edges to the UserCuriosity entity.
+func (cu *CuriosityUpdate) ClearUserCuriosities() *CuriosityUpdate {
+	cu.mutation.ClearUserCuriosities()
 	return cu
 }
 
-// RemoveLikeIDs removes the "likes" edge to Like entities by IDs.
-func (cu *CuriosityUpdate) RemoveLikeIDs(ids ...uuid.UUID) *CuriosityUpdate {
-	cu.mutation.RemoveLikeIDs(ids...)
+// RemoveUserCuriosityIDs removes the "user_curiosities" edge to UserCuriosity entities by IDs.
+func (cu *CuriosityUpdate) RemoveUserCuriosityIDs(ids ...uuid.UUID) *CuriosityUpdate {
+	cu.mutation.RemoveUserCuriosityIDs(ids...)
 	return cu
 }
 
-// RemoveLikes removes "likes" edges to Like entities.
-func (cu *CuriosityUpdate) RemoveLikes(l ...*Like) *CuriosityUpdate {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// RemoveUserCuriosities removes "user_curiosities" edges to UserCuriosity entities.
+func (cu *CuriosityUpdate) RemoveUserCuriosities(u ...*UserCuriosity) *CuriosityUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return cu.RemoveLikeIDs(ids...)
-}
-
-// ClearViews clears all "views" edges to the View entity.
-func (cu *CuriosityUpdate) ClearViews() *CuriosityUpdate {
-	cu.mutation.ClearViews()
-	return cu
-}
-
-// RemoveViewIDs removes the "views" edge to View entities by IDs.
-func (cu *CuriosityUpdate) RemoveViewIDs(ids ...uuid.UUID) *CuriosityUpdate {
-	cu.mutation.RemoveViewIDs(ids...)
-	return cu
-}
-
-// RemoveViews removes "views" edges to View entities.
-func (cu *CuriosityUpdate) RemoveViews(v ...*View) *CuriosityUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return cu.RemoveViewIDs(ids...)
+	return cu.RemoveUserCuriosityIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -269,28 +232,28 @@ func (cu *CuriosityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if cu.mutation.LikesCleared() {
+	if cu.mutation.UserCuriositiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   curiosity.LikesTable,
-			Columns: []string{curiosity.LikesColumn},
+			Table:   curiosity.UserCuriositiesTable,
+			Columns: []string{curiosity.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := cu.mutation.RemovedLikesIDs(); len(nodes) > 0 && !cu.mutation.LikesCleared() {
+	if nodes := cu.mutation.RemovedUserCuriositiesIDs(); len(nodes) > 0 && !cu.mutation.UserCuriositiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   curiosity.LikesTable,
-			Columns: []string{curiosity.LikesColumn},
+			Table:   curiosity.UserCuriositiesTable,
+			Columns: []string{curiosity.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -298,60 +261,15 @@ func (cu *CuriosityUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := cu.mutation.LikesIDs(); len(nodes) > 0 {
+	if nodes := cu.mutation.UserCuriositiesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   curiosity.LikesTable,
-			Columns: []string{curiosity.LikesColumn},
+			Table:   curiosity.UserCuriositiesTable,
+			Columns: []string{curiosity.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if cu.mutation.ViewsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   curiosity.ViewsTable,
-			Columns: []string{curiosity.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := cu.mutation.RemovedViewsIDs(); len(nodes) > 0 && !cu.mutation.ViewsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   curiosity.ViewsTable,
-			Columns: []string{curiosity.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := cu.mutation.ViewsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   curiosity.ViewsTable,
-			Columns: []string{curiosity.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -407,7 +325,7 @@ func (cuo *CuriosityUpdateOne) SetNillableContent(s *string) *CuriosityUpdateOne
 	return cuo
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (cuo *CuriosityUpdateOne) SetUpdatedAt(t time.Time) *CuriosityUpdateOne {
 	cuo.mutation.SetUpdatedAt(t)
 	return cuo
@@ -432,34 +350,19 @@ func (cuo *CuriosityUpdateOne) SetPet(p *Pet) *CuriosityUpdateOne {
 	return cuo.SetPetID(p.ID)
 }
 
-// AddLikeIDs adds the "likes" edge to the Like entity by IDs.
-func (cuo *CuriosityUpdateOne) AddLikeIDs(ids ...uuid.UUID) *CuriosityUpdateOne {
-	cuo.mutation.AddLikeIDs(ids...)
+// AddUserCuriosityIDs adds the "user_curiosities" edge to the UserCuriosity entity by IDs.
+func (cuo *CuriosityUpdateOne) AddUserCuriosityIDs(ids ...uuid.UUID) *CuriosityUpdateOne {
+	cuo.mutation.AddUserCuriosityIDs(ids...)
 	return cuo
 }
 
-// AddLikes adds the "likes" edges to the Like entity.
-func (cuo *CuriosityUpdateOne) AddLikes(l ...*Like) *CuriosityUpdateOne {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// AddUserCuriosities adds the "user_curiosities" edges to the UserCuriosity entity.
+func (cuo *CuriosityUpdateOne) AddUserCuriosities(u ...*UserCuriosity) *CuriosityUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return cuo.AddLikeIDs(ids...)
-}
-
-// AddViewIDs adds the "views" edge to the View entity by IDs.
-func (cuo *CuriosityUpdateOne) AddViewIDs(ids ...uuid.UUID) *CuriosityUpdateOne {
-	cuo.mutation.AddViewIDs(ids...)
-	return cuo
-}
-
-// AddViews adds the "views" edges to the View entity.
-func (cuo *CuriosityUpdateOne) AddViews(v ...*View) *CuriosityUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return cuo.AddViewIDs(ids...)
+	return cuo.AddUserCuriosityIDs(ids...)
 }
 
 // Mutation returns the CuriosityMutation object of the builder.
@@ -473,46 +376,25 @@ func (cuo *CuriosityUpdateOne) ClearPet() *CuriosityUpdateOne {
 	return cuo
 }
 
-// ClearLikes clears all "likes" edges to the Like entity.
-func (cuo *CuriosityUpdateOne) ClearLikes() *CuriosityUpdateOne {
-	cuo.mutation.ClearLikes()
+// ClearUserCuriosities clears all "user_curiosities" edges to the UserCuriosity entity.
+func (cuo *CuriosityUpdateOne) ClearUserCuriosities() *CuriosityUpdateOne {
+	cuo.mutation.ClearUserCuriosities()
 	return cuo
 }
 
-// RemoveLikeIDs removes the "likes" edge to Like entities by IDs.
-func (cuo *CuriosityUpdateOne) RemoveLikeIDs(ids ...uuid.UUID) *CuriosityUpdateOne {
-	cuo.mutation.RemoveLikeIDs(ids...)
+// RemoveUserCuriosityIDs removes the "user_curiosities" edge to UserCuriosity entities by IDs.
+func (cuo *CuriosityUpdateOne) RemoveUserCuriosityIDs(ids ...uuid.UUID) *CuriosityUpdateOne {
+	cuo.mutation.RemoveUserCuriosityIDs(ids...)
 	return cuo
 }
 
-// RemoveLikes removes "likes" edges to Like entities.
-func (cuo *CuriosityUpdateOne) RemoveLikes(l ...*Like) *CuriosityUpdateOne {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// RemoveUserCuriosities removes "user_curiosities" edges to UserCuriosity entities.
+func (cuo *CuriosityUpdateOne) RemoveUserCuriosities(u ...*UserCuriosity) *CuriosityUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return cuo.RemoveLikeIDs(ids...)
-}
-
-// ClearViews clears all "views" edges to the View entity.
-func (cuo *CuriosityUpdateOne) ClearViews() *CuriosityUpdateOne {
-	cuo.mutation.ClearViews()
-	return cuo
-}
-
-// RemoveViewIDs removes the "views" edge to View entities by IDs.
-func (cuo *CuriosityUpdateOne) RemoveViewIDs(ids ...uuid.UUID) *CuriosityUpdateOne {
-	cuo.mutation.RemoveViewIDs(ids...)
-	return cuo
-}
-
-// RemoveViews removes "views" edges to View entities.
-func (cuo *CuriosityUpdateOne) RemoveViews(v ...*View) *CuriosityUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return cuo.RemoveViewIDs(ids...)
+	return cuo.RemoveUserCuriosityIDs(ids...)
 }
 
 // Where appends a list predicates to the CuriosityUpdate builder.
@@ -646,28 +528,28 @@ func (cuo *CuriosityUpdateOne) sqlSave(ctx context.Context) (_node *Curiosity, e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if cuo.mutation.LikesCleared() {
+	if cuo.mutation.UserCuriositiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   curiosity.LikesTable,
-			Columns: []string{curiosity.LikesColumn},
+			Table:   curiosity.UserCuriositiesTable,
+			Columns: []string{curiosity.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := cuo.mutation.RemovedLikesIDs(); len(nodes) > 0 && !cuo.mutation.LikesCleared() {
+	if nodes := cuo.mutation.RemovedUserCuriositiesIDs(); len(nodes) > 0 && !cuo.mutation.UserCuriositiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   curiosity.LikesTable,
-			Columns: []string{curiosity.LikesColumn},
+			Table:   curiosity.UserCuriositiesTable,
+			Columns: []string{curiosity.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -675,60 +557,15 @@ func (cuo *CuriosityUpdateOne) sqlSave(ctx context.Context) (_node *Curiosity, e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := cuo.mutation.LikesIDs(); len(nodes) > 0 {
+	if nodes := cuo.mutation.UserCuriositiesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   curiosity.LikesTable,
-			Columns: []string{curiosity.LikesColumn},
+			Table:   curiosity.UserCuriositiesTable,
+			Columns: []string{curiosity.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if cuo.mutation.ViewsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   curiosity.ViewsTable,
-			Columns: []string{curiosity.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := cuo.mutation.RemovedViewsIDs(); len(nodes) > 0 && !cuo.mutation.ViewsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   curiosity.ViewsTable,
-			Columns: []string{curiosity.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := cuo.mutation.ViewsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   curiosity.ViewsTable,
-			Columns: []string{curiosity.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

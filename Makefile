@@ -20,8 +20,9 @@ build:
 	@GOOS=linux CGO_ENABLED=0 go build -ldflags="-w -s" -o ./tmp/restapi ./cmd/restapi
 lint:
 	@golangci-lint run && nilaway ./...
+migrate:
+	@go run cmd/migrate/main.go
 new_entity:
 	@go run -mod=mod entgo.io/ent/cmd/ent new --target=internal/provider/db/ent/schema $(ARGS)
 %::
 	@true
-

@@ -11,9 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/curiosity"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/like"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/view"
+	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/usercuriosity"
 	"github.com/google/uuid"
 )
 
@@ -36,13 +35,13 @@ func (cc *CuriosityCreate) SetContent(s string) *CuriosityCreate {
 	return cc
 }
 
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (cc *CuriosityCreate) SetCreatedAt(t time.Time) *CuriosityCreate {
 	cc.mutation.SetCreatedAt(t)
 	return cc
 }
 
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
 func (cc *CuriosityCreate) SetNillableCreatedAt(t *time.Time) *CuriosityCreate {
 	if t != nil {
 		cc.SetCreatedAt(*t)
@@ -50,13 +49,13 @@ func (cc *CuriosityCreate) SetNillableCreatedAt(t *time.Time) *CuriosityCreate {
 	return cc
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (cc *CuriosityCreate) SetUpdatedAt(t time.Time) *CuriosityCreate {
 	cc.mutation.SetUpdatedAt(t)
 	return cc
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
 func (cc *CuriosityCreate) SetNillableUpdatedAt(t *time.Time) *CuriosityCreate {
 	if t != nil {
 		cc.SetUpdatedAt(*t)
@@ -97,34 +96,19 @@ func (cc *CuriosityCreate) SetPet(p *Pet) *CuriosityCreate {
 	return cc.SetPetID(p.ID)
 }
 
-// AddLikeIDs adds the "likes" edge to the Like entity by IDs.
-func (cc *CuriosityCreate) AddLikeIDs(ids ...uuid.UUID) *CuriosityCreate {
-	cc.mutation.AddLikeIDs(ids...)
+// AddUserCuriosityIDs adds the "user_curiosities" edge to the UserCuriosity entity by IDs.
+func (cc *CuriosityCreate) AddUserCuriosityIDs(ids ...uuid.UUID) *CuriosityCreate {
+	cc.mutation.AddUserCuriosityIDs(ids...)
 	return cc
 }
 
-// AddLikes adds the "likes" edges to the Like entity.
-func (cc *CuriosityCreate) AddLikes(l ...*Like) *CuriosityCreate {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// AddUserCuriosities adds the "user_curiosities" edges to the UserCuriosity entity.
+func (cc *CuriosityCreate) AddUserCuriosities(u ...*UserCuriosity) *CuriosityCreate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return cc.AddLikeIDs(ids...)
-}
-
-// AddViewIDs adds the "views" edge to the View entity by IDs.
-func (cc *CuriosityCreate) AddViewIDs(ids ...uuid.UUID) *CuriosityCreate {
-	cc.mutation.AddViewIDs(ids...)
-	return cc
-}
-
-// AddViews adds the "views" edges to the View entity.
-func (cc *CuriosityCreate) AddViews(v ...*View) *CuriosityCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return cc.AddViewIDs(ids...)
+	return cc.AddUserCuriosityIDs(ids...)
 }
 
 // Mutation returns the CuriosityMutation object of the builder.
@@ -195,10 +179,10 @@ func (cc *CuriosityCreate) check() error {
 		}
 	}
 	if _, ok := cc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "createdAt", err: errors.New(`ent: missing required field "Curiosity.createdAt"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Curiosity.created_at"`)}
 	}
 	if _, ok := cc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updatedAt", err: errors.New(`ent: missing required field "Curiosity.updatedAt"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Curiosity.updated_at"`)}
 	}
 	return nil
 }
@@ -268,31 +252,15 @@ func (cc *CuriosityCreate) createSpec() (*Curiosity, *sqlgraph.CreateSpec) {
 		_node.pet_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := cc.mutation.LikesIDs(); len(nodes) > 0 {
+	if nodes := cc.mutation.UserCuriositiesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   curiosity.LikesTable,
-			Columns: []string{curiosity.LikesColumn},
+			Table:   curiosity.UserCuriositiesTable,
+			Columns: []string{curiosity.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := cc.mutation.ViewsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   curiosity.ViewsTable,
-			Columns: []string{curiosity.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

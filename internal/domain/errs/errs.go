@@ -68,8 +68,12 @@ var (
 		ErrTypeValidation,
 	)
 	ErrUserNotAllowed = newErr(
-		"only users with the PRO tier can create tasks",
+		"only users with the PRO tier can execute this action",
 		ErrTypeForbidden,
+	)
+	ErrPetNotFound = newErr(
+		"pet not found",
+		ErrTypeNotFound,
 	)
 )
 

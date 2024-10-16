@@ -2,261 +2,250 @@ package usecase
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"strings"
 	"sync"
-
-	"github.com/google/uuid"
 
 	"github.com/danielmesquitta/api-pet-curiosities/internal/domain/errs"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/view"
+	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/usercuriosity"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/gpt"
+	"github.com/google/uuid"
 )
 
-type CreateDailyCuriosities struct {
-	dbClient    *ent.Client
-	gptProvider gpt.Provider
+type CreateDailyCuriositiesUseCase struct {
+	dbClient             *ent.Client
+	gptProvider          gpt.Provider
+	makeCuriosityUseCase *MakeCuriosityUseCase
 }
 
-func NewCreateDailyCuriosities(
+func NewCreateDailyCuriositiesUseCase(
 	dbClient *ent.Client,
 	gptProvider gpt.Provider,
-) *CreateDailyCuriosities {
-	return &CreateDailyCuriosities{
-		dbClient:    dbClient,
-		gptProvider: gptProvider,
+	makeCuriosityUseCase *MakeCuriosityUseCase,
+) *CreateDailyCuriositiesUseCase {
+	return &CreateDailyCuriositiesUseCase{
+		dbClient:             dbClient,
+		gptProvider:          gptProvider,
+		makeCuriosityUseCase: makeCuriosityUseCase,
 	}
 }
 
-type Curiosity struct {
-	Title   string    `json:"title"`
-	Content string    `json:"content"`
-	PetID   uuid.UUID `json:"pet_id"`
-}
-
-/*
-- Execute creates daily curiosities for pets with owners.
-- New curiosities should be created only if:
-- - The pet has owners
-- - The latest curiosity for the pet was viewed OR the pet has no curiosities
-*/
-func (u *CreateDailyCuriosities) Execute(
+func (u *CreateDailyCuriositiesUseCase) Execute(
 	ctx context.Context,
 ) error {
-	petsHavingOwners, curiositiesWithViews, err := u.fetchFromDatabase(
-		ctx,
-	)
-	if err != nil {
-		return err
-	}
-
-	if len(petsHavingOwners) == 0 {
-		return nil
-	}
-
-	latestCuriositiesByPets := u.groupLatestCuriositiesByPets(
-		curiositiesWithViews,
-	)
-
-	curiosities, err := u.generateNewCuriosities(
-		petsHavingOwners,
-		latestCuriositiesByPets,
-	)
+	petWithOwnersAndUserCuriosities, curiosities, err := u.fetchData(ctx)
 	if err != nil {
 		return errs.New(err)
 	}
 
-	if len(curiosities) == 0 {
-		return nil
+	curiositiesByPet := map[uuid.UUID][]*ent.Curiosity{}
+	for _, curiosity := range curiosities {
+		curiositiesByPet[curiosity.Edges.Pet.ID] = append(
+			curiositiesByPet[curiosity.Edges.Pet.ID],
+			curiosity,
+		)
 	}
 
-	if err := u.saveCuriosities(ctx, curiosities); err != nil {
+	newCuriosities := []*ent.Curiosity{}
+	usersByCuriosities := map[uuid.UUID][]uuid.UUID{}
+	for _, p := range petWithOwnersAndUserCuriosities {
+		newCuriosityID := uuid.New()
+		petCuriosities := curiositiesByPet[p.ID]
+
+		for _, owner := range p.Edges.Owners {
+			haveNotSeenLatestCuriosity := len(
+				owner.Edges.UserCuriosities,
+			) > 0 &&
+				!owner.Edges.UserCuriosities[0].Viewed
+			if haveNotSeenLatestCuriosity {
+				continue
+			}
+
+			mustCreateNewCuriosity := len(
+				petCuriosities,
+			) == len(
+				owner.Edges.UserCuriosities,
+			)
+			if mustCreateNewCuriosity {
+				usersByCuriosities[newCuriosityID] = append(
+					usersByCuriosities[newCuriosityID],
+					owner.ID,
+				)
+				continue
+			}
+
+			userCuriosityIDs := map[uuid.UUID]struct{}{}
+			for _, userCuriosity := range owner.Edges.UserCuriosities {
+				userCuriosityIDs[userCuriosity.Edges.Curiosity.ID] = struct{}{}
+			}
+
+			for _, curiosity := range petCuriosities {
+				if _, ok := userCuriosityIDs[curiosity.ID]; ok {
+					continue
+				}
+				usersByCuriosities[curiosity.ID] = append(
+					usersByCuriosities[curiosity.ID],
+					owner.ID,
+				)
+				break
+			}
+		}
+
+		if _, ok := usersByCuriosities[newCuriosityID]; ok {
+			curiosityTitles := []string{}
+			for _, curiosity := range petCuriosities {
+				curiosityTitles = append(curiosityTitles, curiosity.Title)
+			}
+
+			curiosity, err := u.makeCuriosityUseCase.Execute(
+				ctx,
+				p.Breed,
+				curiosityTitles,
+			)
+			if err != nil {
+				return errs.New(err)
+			}
+
+			curiosity.Edges.Pet = p
+			curiosity.ID = newCuriosityID
+			newCuriosities = append(newCuriosities, curiosity)
+		}
+	}
+
+	if err := u.saveCuriosities(ctx, newCuriosities); err != nil {
+		return errs.New(err)
+	}
+
+	newUserCuriosities := []*ent.UserCuriosity{}
+	for curiosityID, userIDs := range usersByCuriosities {
+		for _, userID := range userIDs {
+			newUserCuriosities = append(newUserCuriosities, &ent.UserCuriosity{
+				Edges: ent.UserCuriosityEdges{
+					User: &ent.User{
+						ID: userID,
+					},
+					Curiosity: &ent.Curiosity{
+						ID: curiosityID,
+					},
+				},
+			})
+		}
+	}
+
+	if err := u.saveUserCuriosities(ctx, newUserCuriosities); err != nil {
 		return errs.New(err)
 	}
 
 	return nil
 }
 
-func (u *CreateDailyCuriosities) fetchFromDatabase(
+func (u *CreateDailyCuriositiesUseCase) fetchData(
 	ctx context.Context,
 ) ([]*ent.Pet, []*ent.Curiosity, error) {
-	var petsHavingOwners []*ent.Pet
-	var curiositiesWithViews []*ent.Curiosity
+	type Result struct {
+		Pets        []*ent.Pet
+		Curiosities []*ent.Curiosity
+		Error       error
+	}
 
-	var wg sync.WaitGroup
-	errChan := make(chan error)
+	jobsCount := 2
+	wg := sync.WaitGroup{}
+	wg.Add(jobsCount)
+	resultCh := make(chan Result, jobsCount)
 
-	wg.Add(1)
 	go func() {
 		defer wg.Done()
-
-		var err error
-		petsHavingOwners, err = u.dbClient.Pet.Query().Where(
-			pet.HasOwners(),
-		).All(ctx)
-		errChan <- err
+		petWithOwnersAndUserCuriosities, err := u.dbClient.Pet.Query().
+			Where(pet.HasOwners()).
+			WithOwners(func(q *ent.UserQuery) {
+				q.WithUserCuriosities(func(q *ent.UserCuriosityQuery) {
+					q.Order(ent.Desc(usercuriosity.FieldCreatedAt))
+				})
+			}).
+			All(ctx)
+		resultCh <- Result{
+			Pets:  petWithOwnersAndUserCuriosities,
+			Error: errs.New(err),
+		}
 	}()
 
-	wg.Add(1)
 	go func() {
 		defer wg.Done()
-
-		var err error
-		curiositiesWithViews, err = u.dbClient.Curiosity.Query().WithViews(
-			func(q *ent.ViewQuery) {
-				q.Order(ent.Desc(view.FieldCreatedAt)).Limit(1)
-			},
-		).Order(ent.Desc(view.FieldCreatedAt)).All(ctx)
-		errChan <- err
+		curiosities, err := u.dbClient.Curiosity.Query().All(ctx)
+		resultCh <- Result{
+			Curiosities: curiosities,
+			Error:       errs.New(err),
+		}
 	}()
 
 	go func() {
 		wg.Wait()
-		close(errChan)
+		close(resultCh)
 	}()
 
-	var joinedErrs error
-	for err := range errChan {
-		if err != nil {
-			joinedErrs = errors.Join(joinedErrs, err)
+	var pets []*ent.Pet
+	var curiosities []*ent.Curiosity
+	var err error
+	for res := range resultCh {
+		if res.Error != nil {
+			err = errors.Join(err, res.Error)
+		}
+		if len(res.Pets) > 0 {
+			pets = res.Pets
+		}
+		if len(res.Curiosities) > 0 {
+			curiosities = res.Curiosities
 		}
 	}
 
-	if joinedErrs != nil {
-		return nil, nil, errs.New(joinedErrs)
+	if err != nil {
+		return nil, nil, errs.New(err)
 	}
 
-	return petsHavingOwners, curiositiesWithViews, nil
+	return pets, curiosities, nil
 }
 
-func (u *CreateDailyCuriosities) generateNewCuriosities(
-	petsHavingOwners []*ent.Pet,
-	latestCuriositiesByPets map[string][]*ent.Curiosity,
-) ([]Curiosity, error) {
-	var wg sync.WaitGroup
-	curiosities := []Curiosity{}
-	curiosityChan := make(chan Curiosity)
-	errChan := make(chan error)
-
-	wg.Add(len(petsHavingOwners))
-	for _, pet := range petsHavingOwners {
-		go func() {
-			defer wg.Done()
-
-			message := fmt.Sprintf(
-				"Write a short title and interesting fact about the %s breed (max 3 lines), "+
-					"and return in JSON format with the keys \"title\" and \"content\"",
-				pet.Breed,
-			)
-
-			var topics string
-			if latestPetCuriosities, ok := latestCuriositiesByPets[pet.ID.String()]; ok {
-				latestPetCuriosity := latestPetCuriosities[0]
-
-				if latestPetCuriosityWasNotViewed := latestPetCuriosity != nil &&
-					len(latestPetCuriosity.Edges.Views) == 0; latestPetCuriosityWasNotViewed {
-					return
-				}
-
-				titles := make([]string, len(latestPetCuriosities))
-				for _, curiosity := range latestPetCuriosities {
-					title := fmt.Sprintf("\"%s\"", curiosity.Title)
-					titles = append(titles, title)
-				}
-
-				topics = strings.Join(titles, ", ")
-			}
-
-			if topics != "" {
-				message += fmt.Sprintf(
-					". Avoid topics on %s",
-					topics,
-				)
-			}
-
-			completion, err := u.gptProvider.CreateChatCompletion(message)
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			var curiosity Curiosity
-			if err := json.Unmarshal([]byte(completion), &curiosity); err != nil {
-				errChan <- err
-				return
-			}
-
-			curiosity.PetID = pet.ID
-			curiosityChan <- curiosity
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		close(curiosityChan)
-		close(errChan)
-	}()
-
-	var joinedErrs error
-	for {
-		select {
-		case curiosity, ok := <-curiosityChan:
-			if ok {
-				curiosities = append(curiosities, curiosity)
-			}
-		case err, ok := <-errChan:
-			if ok {
-				joinedErrs = errors.Join(joinedErrs, err)
-			}
-		}
-		if len(curiosityChan) == 0 && len(errChan) == 0 {
-			break
-		}
-	}
-
-	if joinedErrs != nil {
-		return nil, errs.New(joinedErrs)
-	}
-
-	return curiosities, nil
-}
-
-func (u *CreateDailyCuriosities) groupLatestCuriositiesByPets(
-	curiositiesWithViews []*ent.Curiosity,
-) map[string][]*ent.Curiosity {
-	latestCuriositiesByPets := make(map[string][]*ent.Curiosity)
-	for _, curiosity := range curiositiesWithViews {
-		petID := curiosity.Edges.Pet.ID.String()
-		latestCuriositiesByPets[petID] = append(
-			latestCuriositiesByPets[petID],
-			curiosity,
-		)
-	}
-
-	return latestCuriositiesByPets
-}
-
-func (u *CreateDailyCuriosities) saveCuriosities(
+func (u *CreateDailyCuriositiesUseCase) saveCuriosities(
 	ctx context.Context,
-	curiosities []Curiosity,
+	curiosities []*ent.Curiosity,
 ) error {
 	var builders []*ent.CuriosityCreate
 	for _, curiosity := range curiosities {
 		builders = append(
 			builders,
 			u.dbClient.Curiosity.Create().
+				SetID(curiosity.ID).
 				SetTitle(curiosity.Title).
 				SetContent(curiosity.Content).
-				SetPetID(curiosity.PetID),
+				SetPetID(curiosity.Edges.Pet.ID),
 		)
 	}
 
 	if _, err := u.dbClient.Curiosity.
 		CreateBulk(builders...).Save(ctx); err != nil {
+		return errs.New(err)
+	}
+
+	return nil
+}
+
+func (u *CreateDailyCuriositiesUseCase) saveUserCuriosities(
+	ctx context.Context,
+	userCuriosities []*ent.UserCuriosity,
+) error {
+	var builders []*ent.UserCuriosityCreate
+	for _, userCuriosity := range userCuriosities {
+		builders = append(
+			builders,
+			u.dbClient.UserCuriosity.Create().
+				SetCuriosityID(userCuriosity.Edges.Curiosity.ID).
+				SetUserID(userCuriosity.Edges.User.ID),
+		)
+	}
+	_, err := u.dbClient.UserCuriosity.
+		CreateBulk(builders...).Save(ctx)
+	if err != nil {
 		return errs.New(err)
 	}
 

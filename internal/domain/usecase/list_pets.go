@@ -38,7 +38,7 @@ func (u *ListPetsUseCase) Execute(
 	}
 
 	if in.Breed != "" {
-		where = append(where, pet.SearchContains(in.Breed))
+		where = append(where, pet.BreedContainsFold(in.Breed))
 	}
 
 	pets, err := u.dbClient.Pet.Query().Where(where...).Order(

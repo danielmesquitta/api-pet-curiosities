@@ -11,11 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/like"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/pet"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/predicate"
 	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/user"
-	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/view"
+	"github.com/danielmesquitta/api-pet-curiosities/internal/provider/db/ent/usercuriosity"
 	"github.com/google/uuid"
 )
 
@@ -74,13 +73,13 @@ func (uu *UserUpdate) SetNillableTier(u *user.Tier) *UserUpdate {
 	return uu
 }
 
-// SetSubscriptionExpiresAt sets the "subscriptionExpiresAt" field.
+// SetSubscriptionExpiresAt sets the "subscription_expires_at" field.
 func (uu *UserUpdate) SetSubscriptionExpiresAt(t time.Time) *UserUpdate {
 	uu.mutation.SetSubscriptionExpiresAt(t)
 	return uu
 }
 
-// SetNillableSubscriptionExpiresAt sets the "subscriptionExpiresAt" field if the given value is not nil.
+// SetNillableSubscriptionExpiresAt sets the "subscription_expires_at" field if the given value is not nil.
 func (uu *UserUpdate) SetNillableSubscriptionExpiresAt(t *time.Time) *UserUpdate {
 	if t != nil {
 		uu.SetSubscriptionExpiresAt(*t)
@@ -88,13 +87,13 @@ func (uu *UserUpdate) SetNillableSubscriptionExpiresAt(t *time.Time) *UserUpdate
 	return uu
 }
 
-// ClearSubscriptionExpiresAt clears the value of the "subscriptionExpiresAt" field.
+// ClearSubscriptionExpiresAt clears the value of the "subscription_expires_at" field.
 func (uu *UserUpdate) ClearSubscriptionExpiresAt() *UserUpdate {
 	uu.mutation.ClearSubscriptionExpiresAt()
 	return uu
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (uu *UserUpdate) SetUpdatedAt(t time.Time) *UserUpdate {
 	uu.mutation.SetUpdatedAt(t)
 	return uu
@@ -115,34 +114,19 @@ func (uu *UserUpdate) AddPets(p ...*Pet) *UserUpdate {
 	return uu.AddPetIDs(ids...)
 }
 
-// AddLikeIDs adds the "likes" edge to the Like entity by IDs.
-func (uu *UserUpdate) AddLikeIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.AddLikeIDs(ids...)
+// AddUserCuriosityIDs adds the "user_curiosities" edge to the UserCuriosity entity by IDs.
+func (uu *UserUpdate) AddUserCuriosityIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddUserCuriosityIDs(ids...)
 	return uu
 }
 
-// AddLikes adds the "likes" edges to the Like entity.
-func (uu *UserUpdate) AddLikes(l ...*Like) *UserUpdate {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// AddUserCuriosities adds the "user_curiosities" edges to the UserCuriosity entity.
+func (uu *UserUpdate) AddUserCuriosities(u ...*UserCuriosity) *UserUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return uu.AddLikeIDs(ids...)
-}
-
-// AddViewIDs adds the "views" edge to the View entity by IDs.
-func (uu *UserUpdate) AddViewIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.AddViewIDs(ids...)
-	return uu
-}
-
-// AddViews adds the "views" edges to the View entity.
-func (uu *UserUpdate) AddViews(v ...*View) *UserUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return uu.AddViewIDs(ids...)
+	return uu.AddUserCuriosityIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -171,46 +155,25 @@ func (uu *UserUpdate) RemovePets(p ...*Pet) *UserUpdate {
 	return uu.RemovePetIDs(ids...)
 }
 
-// ClearLikes clears all "likes" edges to the Like entity.
-func (uu *UserUpdate) ClearLikes() *UserUpdate {
-	uu.mutation.ClearLikes()
+// ClearUserCuriosities clears all "user_curiosities" edges to the UserCuriosity entity.
+func (uu *UserUpdate) ClearUserCuriosities() *UserUpdate {
+	uu.mutation.ClearUserCuriosities()
 	return uu
 }
 
-// RemoveLikeIDs removes the "likes" edge to Like entities by IDs.
-func (uu *UserUpdate) RemoveLikeIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.RemoveLikeIDs(ids...)
+// RemoveUserCuriosityIDs removes the "user_curiosities" edge to UserCuriosity entities by IDs.
+func (uu *UserUpdate) RemoveUserCuriosityIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveUserCuriosityIDs(ids...)
 	return uu
 }
 
-// RemoveLikes removes "likes" edges to Like entities.
-func (uu *UserUpdate) RemoveLikes(l ...*Like) *UserUpdate {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// RemoveUserCuriosities removes "user_curiosities" edges to UserCuriosity entities.
+func (uu *UserUpdate) RemoveUserCuriosities(u ...*UserCuriosity) *UserUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return uu.RemoveLikeIDs(ids...)
-}
-
-// ClearViews clears all "views" edges to the View entity.
-func (uu *UserUpdate) ClearViews() *UserUpdate {
-	uu.mutation.ClearViews()
-	return uu
-}
-
-// RemoveViewIDs removes the "views" edge to View entities by IDs.
-func (uu *UserUpdate) RemoveViewIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.RemoveViewIDs(ids...)
-	return uu
-}
-
-// RemoveViews removes "views" edges to View entities.
-func (uu *UserUpdate) RemoveViews(v ...*View) *UserUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return uu.RemoveViewIDs(ids...)
+	return uu.RemoveUserCuriosityIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -344,28 +307,28 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uu.mutation.LikesCleared() {
+	if uu.mutation.UserCuriositiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   user.LikesTable,
-			Columns: []string{user.LikesColumn},
+			Table:   user.UserCuriositiesTable,
+			Columns: []string{user.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedLikesIDs(); len(nodes) > 0 && !uu.mutation.LikesCleared() {
+	if nodes := uu.mutation.RemovedUserCuriositiesIDs(); len(nodes) > 0 && !uu.mutation.UserCuriositiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   user.LikesTable,
-			Columns: []string{user.LikesColumn},
+			Table:   user.UserCuriositiesTable,
+			Columns: []string{user.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -373,60 +336,15 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.LikesIDs(); len(nodes) > 0 {
+	if nodes := uu.mutation.UserCuriositiesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   user.LikesTable,
-			Columns: []string{user.LikesColumn},
+			Table:   user.UserCuriositiesTable,
+			Columns: []string{user.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if uu.mutation.ViewsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.ViewsTable,
-			Columns: []string{user.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uu.mutation.RemovedViewsIDs(); len(nodes) > 0 && !uu.mutation.ViewsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.ViewsTable,
-			Columns: []string{user.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uu.mutation.ViewsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.ViewsTable,
-			Columns: []string{user.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -496,13 +414,13 @@ func (uuo *UserUpdateOne) SetNillableTier(u *user.Tier) *UserUpdateOne {
 	return uuo
 }
 
-// SetSubscriptionExpiresAt sets the "subscriptionExpiresAt" field.
+// SetSubscriptionExpiresAt sets the "subscription_expires_at" field.
 func (uuo *UserUpdateOne) SetSubscriptionExpiresAt(t time.Time) *UserUpdateOne {
 	uuo.mutation.SetSubscriptionExpiresAt(t)
 	return uuo
 }
 
-// SetNillableSubscriptionExpiresAt sets the "subscriptionExpiresAt" field if the given value is not nil.
+// SetNillableSubscriptionExpiresAt sets the "subscription_expires_at" field if the given value is not nil.
 func (uuo *UserUpdateOne) SetNillableSubscriptionExpiresAt(t *time.Time) *UserUpdateOne {
 	if t != nil {
 		uuo.SetSubscriptionExpiresAt(*t)
@@ -510,13 +428,13 @@ func (uuo *UserUpdateOne) SetNillableSubscriptionExpiresAt(t *time.Time) *UserUp
 	return uuo
 }
 
-// ClearSubscriptionExpiresAt clears the value of the "subscriptionExpiresAt" field.
+// ClearSubscriptionExpiresAt clears the value of the "subscription_expires_at" field.
 func (uuo *UserUpdateOne) ClearSubscriptionExpiresAt() *UserUpdateOne {
 	uuo.mutation.ClearSubscriptionExpiresAt()
 	return uuo
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (uuo *UserUpdateOne) SetUpdatedAt(t time.Time) *UserUpdateOne {
 	uuo.mutation.SetUpdatedAt(t)
 	return uuo
@@ -537,34 +455,19 @@ func (uuo *UserUpdateOne) AddPets(p ...*Pet) *UserUpdateOne {
 	return uuo.AddPetIDs(ids...)
 }
 
-// AddLikeIDs adds the "likes" edge to the Like entity by IDs.
-func (uuo *UserUpdateOne) AddLikeIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.AddLikeIDs(ids...)
+// AddUserCuriosityIDs adds the "user_curiosities" edge to the UserCuriosity entity by IDs.
+func (uuo *UserUpdateOne) AddUserCuriosityIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddUserCuriosityIDs(ids...)
 	return uuo
 }
 
-// AddLikes adds the "likes" edges to the Like entity.
-func (uuo *UserUpdateOne) AddLikes(l ...*Like) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// AddUserCuriosities adds the "user_curiosities" edges to the UserCuriosity entity.
+func (uuo *UserUpdateOne) AddUserCuriosities(u ...*UserCuriosity) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return uuo.AddLikeIDs(ids...)
-}
-
-// AddViewIDs adds the "views" edge to the View entity by IDs.
-func (uuo *UserUpdateOne) AddViewIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.AddViewIDs(ids...)
-	return uuo
-}
-
-// AddViews adds the "views" edges to the View entity.
-func (uuo *UserUpdateOne) AddViews(v ...*View) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return uuo.AddViewIDs(ids...)
+	return uuo.AddUserCuriosityIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -593,46 +496,25 @@ func (uuo *UserUpdateOne) RemovePets(p ...*Pet) *UserUpdateOne {
 	return uuo.RemovePetIDs(ids...)
 }
 
-// ClearLikes clears all "likes" edges to the Like entity.
-func (uuo *UserUpdateOne) ClearLikes() *UserUpdateOne {
-	uuo.mutation.ClearLikes()
+// ClearUserCuriosities clears all "user_curiosities" edges to the UserCuriosity entity.
+func (uuo *UserUpdateOne) ClearUserCuriosities() *UserUpdateOne {
+	uuo.mutation.ClearUserCuriosities()
 	return uuo
 }
 
-// RemoveLikeIDs removes the "likes" edge to Like entities by IDs.
-func (uuo *UserUpdateOne) RemoveLikeIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.RemoveLikeIDs(ids...)
+// RemoveUserCuriosityIDs removes the "user_curiosities" edge to UserCuriosity entities by IDs.
+func (uuo *UserUpdateOne) RemoveUserCuriosityIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveUserCuriosityIDs(ids...)
 	return uuo
 }
 
-// RemoveLikes removes "likes" edges to Like entities.
-func (uuo *UserUpdateOne) RemoveLikes(l ...*Like) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(l))
-	for i := range l {
-		ids[i] = l[i].ID
+// RemoveUserCuriosities removes "user_curiosities" edges to UserCuriosity entities.
+func (uuo *UserUpdateOne) RemoveUserCuriosities(u ...*UserCuriosity) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
-	return uuo.RemoveLikeIDs(ids...)
-}
-
-// ClearViews clears all "views" edges to the View entity.
-func (uuo *UserUpdateOne) ClearViews() *UserUpdateOne {
-	uuo.mutation.ClearViews()
-	return uuo
-}
-
-// RemoveViewIDs removes the "views" edge to View entities by IDs.
-func (uuo *UserUpdateOne) RemoveViewIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.RemoveViewIDs(ids...)
-	return uuo
-}
-
-// RemoveViews removes "views" edges to View entities.
-func (uuo *UserUpdateOne) RemoveViews(v ...*View) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return uuo.RemoveViewIDs(ids...)
+	return uuo.RemoveUserCuriosityIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -796,28 +678,28 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uuo.mutation.LikesCleared() {
+	if uuo.mutation.UserCuriositiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   user.LikesTable,
-			Columns: []string{user.LikesColumn},
+			Table:   user.UserCuriositiesTable,
+			Columns: []string{user.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedLikesIDs(); len(nodes) > 0 && !uuo.mutation.LikesCleared() {
+	if nodes := uuo.mutation.RemovedUserCuriositiesIDs(); len(nodes) > 0 && !uuo.mutation.UserCuriositiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   user.LikesTable,
-			Columns: []string{user.LikesColumn},
+			Table:   user.UserCuriositiesTable,
+			Columns: []string{user.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -825,60 +707,15 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.LikesIDs(); len(nodes) > 0 {
+	if nodes := uuo.mutation.UserCuriositiesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   user.LikesTable,
-			Columns: []string{user.LikesColumn},
+			Table:   user.UserCuriositiesTable,
+			Columns: []string{user.UserCuriositiesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if uuo.mutation.ViewsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.ViewsTable,
-			Columns: []string{user.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uuo.mutation.RemovedViewsIDs(); len(nodes) > 0 && !uuo.mutation.ViewsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.ViewsTable,
-			Columns: []string{user.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uuo.mutation.ViewsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.ViewsTable,
-			Columns: []string{user.ViewsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(view.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(usercuriosity.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

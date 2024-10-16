@@ -22,12 +22,10 @@ type Pet struct {
 	Specie pet.Specie `json:"specie,omitempty"`
 	// Breed holds the value of the "breed" field.
 	Breed string `json:"breed,omitempty"`
-	// Search holds the value of the "search" field.
-	Search string `json:"search,omitempty"`
-	// CreatedAt holds the value of the "createdAt" field.
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	// UpdatedAt holds the value of the "updatedAt" field.
-	UpdatedAt time.Time `json:"updatedAt,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PetQuery when eager-loading is set.
 	Edges        PetEdges `json:"edges"`
@@ -68,7 +66,7 @@ func (*Pet) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case pet.FieldSpecie, pet.FieldBreed, pet.FieldSearch:
+		case pet.FieldSpecie, pet.FieldBreed:
 			values[i] = new(sql.NullString)
 		case pet.FieldCreatedAt, pet.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -107,21 +105,15 @@ func (pe *Pet) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				pe.Breed = value.String
 			}
-		case pet.FieldSearch:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field search", values[i])
-			} else if value.Valid {
-				pe.Search = value.String
-			}
 		case pet.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field createdAt", values[i])
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				pe.CreatedAt = value.Time
 			}
 		case pet.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updatedAt", values[i])
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				pe.UpdatedAt = value.Time
 			}
@@ -177,13 +169,10 @@ func (pe *Pet) String() string {
 	builder.WriteString("breed=")
 	builder.WriteString(pe.Breed)
 	builder.WriteString(", ")
-	builder.WriteString("search=")
-	builder.WriteString(pe.Search)
-	builder.WriteString(", ")
-	builder.WriteString("createdAt=")
+	builder.WriteString("created_at=")
 	builder.WriteString(pe.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("updatedAt=")
+	builder.WriteString("updated_at=")
 	builder.WriteString(pe.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()

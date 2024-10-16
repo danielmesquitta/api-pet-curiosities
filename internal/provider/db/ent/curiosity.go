@@ -23,10 +23,10 @@ type Curiosity struct {
 	Title string `json:"title,omitempty"`
 	// Content holds the value of the "content" field.
 	Content string `json:"content,omitempty"`
-	// CreatedAt holds the value of the "createdAt" field.
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	// UpdatedAt holds the value of the "updatedAt" field.
-	UpdatedAt time.Time `json:"updatedAt,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CuriosityQuery when eager-loading is set.
 	Edges        CuriosityEdges `json:"edges"`
@@ -38,13 +38,11 @@ type Curiosity struct {
 type CuriosityEdges struct {
 	// Pet holds the value of the pet edge.
 	Pet *Pet `json:"pet,omitempty"`
-	// Likes holds the value of the likes edge.
-	Likes []*Like `json:"likes,omitempty"`
-	// Views holds the value of the views edge.
-	Views []*View `json:"views,omitempty"`
+	// UserCuriosities holds the value of the user_curiosities edge.
+	UserCuriosities []*UserCuriosity `json:"user_curiosities,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [2]bool
 }
 
 // PetOrErr returns the Pet value or an error if the edge
@@ -58,22 +56,13 @@ func (e CuriosityEdges) PetOrErr() (*Pet, error) {
 	return nil, &NotLoadedError{edge: "pet"}
 }
 
-// LikesOrErr returns the Likes value or an error if the edge
+// UserCuriositiesOrErr returns the UserCuriosities value or an error if the edge
 // was not loaded in eager-loading.
-func (e CuriosityEdges) LikesOrErr() ([]*Like, error) {
+func (e CuriosityEdges) UserCuriositiesOrErr() ([]*UserCuriosity, error) {
 	if e.loadedTypes[1] {
-		return e.Likes, nil
+		return e.UserCuriosities, nil
 	}
-	return nil, &NotLoadedError{edge: "likes"}
-}
-
-// ViewsOrErr returns the Views value or an error if the edge
-// was not loaded in eager-loading.
-func (e CuriosityEdges) ViewsOrErr() ([]*View, error) {
-	if e.loadedTypes[2] {
-		return e.Views, nil
-	}
-	return nil, &NotLoadedError{edge: "views"}
+	return nil, &NotLoadedError{edge: "user_curiosities"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -124,13 +113,13 @@ func (c *Curiosity) assignValues(columns []string, values []any) error {
 			}
 		case curiosity.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field createdAt", values[i])
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				c.CreatedAt = value.Time
 			}
 		case curiosity.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updatedAt", values[i])
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				c.UpdatedAt = value.Time
 			}
@@ -159,14 +148,9 @@ func (c *Curiosity) QueryPet() *PetQuery {
 	return NewCuriosityClient(c.config).QueryPet(c)
 }
 
-// QueryLikes queries the "likes" edge of the Curiosity entity.
-func (c *Curiosity) QueryLikes() *LikeQuery {
-	return NewCuriosityClient(c.config).QueryLikes(c)
-}
-
-// QueryViews queries the "views" edge of the Curiosity entity.
-func (c *Curiosity) QueryViews() *ViewQuery {
-	return NewCuriosityClient(c.config).QueryViews(c)
+// QueryUserCuriosities queries the "user_curiosities" edge of the Curiosity entity.
+func (c *Curiosity) QueryUserCuriosities() *UserCuriosityQuery {
+	return NewCuriosityClient(c.config).QueryUserCuriosities(c)
 }
 
 // Update returns a builder for updating this Curiosity.
@@ -198,10 +182,10 @@ func (c *Curiosity) String() string {
 	builder.WriteString("content=")
 	builder.WriteString(c.Content)
 	builder.WriteString(", ")
-	builder.WriteString("createdAt=")
+	builder.WriteString("created_at=")
 	builder.WriteString(c.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("updatedAt=")
+	builder.WriteString("updated_at=")
 	builder.WriteString(c.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()

@@ -28,13 +28,13 @@ func (User) Fields() []ent.Field {
 		field.Enum("tier").
 			Values("PRO", "FREE").
 			Default("FREE"),
-		field.Time("subscriptionExpiresAt").
+		field.Time("subscription_expires_at").
 			Nillable().
 			Optional(),
-		field.Time("createdAt").
+		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
-		field.Time("updatedAt").
+		field.Time("updated_at").
 			Default(time.Now).
 			UpdateDefault(time.Now),
 	}
@@ -43,8 +43,7 @@ func (User) Fields() []ent.Field {
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("pets", Pet.Type),
-		edge.From("likes", Like.Type).Ref("user"),
-		edge.From("views", View.Type).Ref("user"),
+		edge.To("pets", Pet.Type).StorageKey(edge.Table("user_pets")),
+		edge.From("user_curiosities", UserCuriosity.Type).Ref("user"),
 	}
 }

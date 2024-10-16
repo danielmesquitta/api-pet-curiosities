@@ -59,21 +59,7 @@ func (pu *PetUpdate) SetNillableBreed(s *string) *PetUpdate {
 	return pu
 }
 
-// SetSearch sets the "search" field.
-func (pu *PetUpdate) SetSearch(s string) *PetUpdate {
-	pu.mutation.SetSearch(s)
-	return pu
-}
-
-// SetNillableSearch sets the "search" field if the given value is not nil.
-func (pu *PetUpdate) SetNillableSearch(s *string) *PetUpdate {
-	if s != nil {
-		pu.SetSearch(*s)
-	}
-	return pu
-}
-
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (pu *PetUpdate) SetUpdatedAt(t time.Time) *PetUpdate {
 	pu.mutation.SetUpdatedAt(t)
 	return pu
@@ -204,11 +190,6 @@ func (pu *PetUpdate) check() error {
 			return &ValidationError{Name: "breed", err: fmt.Errorf(`ent: validator failed for field "Pet.breed": %w`, err)}
 		}
 	}
-	if v, ok := pu.mutation.Search(); ok {
-		if err := pet.SearchValidator(v); err != nil {
-			return &ValidationError{Name: "search", err: fmt.Errorf(`ent: validator failed for field "Pet.search": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -229,9 +210,6 @@ func (pu *PetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := pu.mutation.Breed(); ok {
 		_spec.SetField(pet.FieldBreed, field.TypeString, value)
-	}
-	if value, ok := pu.mutation.Search(); ok {
-		_spec.SetField(pet.FieldSearch, field.TypeString, value)
 	}
 	if value, ok := pu.mutation.UpdatedAt(); ok {
 		_spec.SetField(pet.FieldUpdatedAt, field.TypeTime, value)
@@ -374,21 +352,7 @@ func (puo *PetUpdateOne) SetNillableBreed(s *string) *PetUpdateOne {
 	return puo
 }
 
-// SetSearch sets the "search" field.
-func (puo *PetUpdateOne) SetSearch(s string) *PetUpdateOne {
-	puo.mutation.SetSearch(s)
-	return puo
-}
-
-// SetNillableSearch sets the "search" field if the given value is not nil.
-func (puo *PetUpdateOne) SetNillableSearch(s *string) *PetUpdateOne {
-	if s != nil {
-		puo.SetSearch(*s)
-	}
-	return puo
-}
-
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (puo *PetUpdateOne) SetUpdatedAt(t time.Time) *PetUpdateOne {
 	puo.mutation.SetUpdatedAt(t)
 	return puo
@@ -532,11 +496,6 @@ func (puo *PetUpdateOne) check() error {
 			return &ValidationError{Name: "breed", err: fmt.Errorf(`ent: validator failed for field "Pet.breed": %w`, err)}
 		}
 	}
-	if v, ok := puo.mutation.Search(); ok {
-		if err := pet.SearchValidator(v); err != nil {
-			return &ValidationError{Name: "search", err: fmt.Errorf(`ent: validator failed for field "Pet.search": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -574,9 +533,6 @@ func (puo *PetUpdateOne) sqlSave(ctx context.Context) (_node *Pet, err error) {
 	}
 	if value, ok := puo.mutation.Breed(); ok {
 		_spec.SetField(pet.FieldBreed, field.TypeString, value)
-	}
-	if value, ok := puo.mutation.Search(); ok {
-		_spec.SetField(pet.FieldSearch, field.TypeString, value)
 	}
 	if value, ok := puo.mutation.UpdatedAt(); ok {
 		_spec.SetField(pet.FieldUpdatedAt, field.TypeTime, value)

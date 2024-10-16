@@ -35,19 +35,13 @@ func (pc *PetCreate) SetBreed(s string) *PetCreate {
 	return pc
 }
 
-// SetSearch sets the "search" field.
-func (pc *PetCreate) SetSearch(s string) *PetCreate {
-	pc.mutation.SetSearch(s)
-	return pc
-}
-
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (pc *PetCreate) SetCreatedAt(t time.Time) *PetCreate {
 	pc.mutation.SetCreatedAt(t)
 	return pc
 }
 
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
 func (pc *PetCreate) SetNillableCreatedAt(t *time.Time) *PetCreate {
 	if t != nil {
 		pc.SetCreatedAt(*t)
@@ -55,13 +49,13 @@ func (pc *PetCreate) SetNillableCreatedAt(t *time.Time) *PetCreate {
 	return pc
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (pc *PetCreate) SetUpdatedAt(t time.Time) *PetCreate {
 	pc.mutation.SetUpdatedAt(t)
 	return pc
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
 func (pc *PetCreate) SetNillableUpdatedAt(t *time.Time) *PetCreate {
 	if t != nil {
 		pc.SetUpdatedAt(*t)
@@ -180,19 +174,11 @@ func (pc *PetCreate) check() error {
 			return &ValidationError{Name: "breed", err: fmt.Errorf(`ent: validator failed for field "Pet.breed": %w`, err)}
 		}
 	}
-	if _, ok := pc.mutation.Search(); !ok {
-		return &ValidationError{Name: "search", err: errors.New(`ent: missing required field "Pet.search"`)}
-	}
-	if v, ok := pc.mutation.Search(); ok {
-		if err := pet.SearchValidator(v); err != nil {
-			return &ValidationError{Name: "search", err: fmt.Errorf(`ent: validator failed for field "Pet.search": %w`, err)}
-		}
-	}
 	if _, ok := pc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "createdAt", err: errors.New(`ent: missing required field "Pet.createdAt"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Pet.created_at"`)}
 	}
 	if _, ok := pc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updatedAt", err: errors.New(`ent: missing required field "Pet.updatedAt"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Pet.updated_at"`)}
 	}
 	return nil
 }
@@ -236,10 +222,6 @@ func (pc *PetCreate) createSpec() (*Pet, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.Breed(); ok {
 		_spec.SetField(pet.FieldBreed, field.TypeString, value)
 		_node.Breed = value
-	}
-	if value, ok := pc.mutation.Search(); ok {
-		_spec.SetField(pet.FieldSearch, field.TypeString, value)
-		_node.Search = value
 	}
 	if value, ok := pc.mutation.CreatedAt(); ok {
 		_spec.SetField(pet.FieldCreatedAt, field.TypeTime, value)

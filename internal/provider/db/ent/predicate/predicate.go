@@ -9,14 +9,11 @@ import (
 // Curiosity is the predicate function for curiosity builders.
 type Curiosity func(*sql.Selector)
 
-// Like is the predicate function for like builders.
-type Like func(*sql.Selector)
-
 // Pet is the predicate function for pet builders.
 type Pet func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 
-// View is the predicate function for view builders.
-type View func(*sql.Selector)
+// UserCuriosity is the predicate function for usercuriosity builders.
+type UserCuriosity func(*sql.Selector)

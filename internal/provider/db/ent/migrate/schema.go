@@ -31,39 +31,11 @@ var (
 			},
 		},
 	}
-	// LikesColumns holds the columns for the "likes" table.
-	LikesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID, Unique: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "user_id", Type: field.TypeUUID, Nullable: true},
-		{Name: "curiosity_id", Type: field.TypeUUID, Nullable: true},
-	}
-	// LikesTable holds the schema information for the "likes" table.
-	LikesTable = &schema.Table{
-		Name:       "likes",
-		Columns:    LikesColumns,
-		PrimaryKey: []*schema.Column{LikesColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "likes_users_user",
-				Columns:    []*schema.Column{LikesColumns[2]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
-				Symbol:     "likes_curiosities_curiosity",
-				Columns:    []*schema.Column{LikesColumns[3]},
-				RefColumns: []*schema.Column{CuriositiesColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-	}
 	// PetsColumns holds the columns for the "pets" table.
 	PetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "specie", Type: field.TypeEnum, Enums: []string{"DOG", "CAT"}},
 		{Name: "breed", Type: field.TypeString},
-		{Name: "search", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -89,28 +61,30 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
-	// ViewsColumns holds the columns for the "views" table.
-	ViewsColumns = []*schema.Column{
+	// UserCuriositiesColumns holds the columns for the "user_curiosities" table.
+	UserCuriositiesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "viewed", Type: field.TypeBool, Default: false},
+		{Name: "liked", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "user_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "curiosity_id", Type: field.TypeUUID, Nullable: true},
 	}
-	// ViewsTable holds the schema information for the "views" table.
-	ViewsTable = &schema.Table{
-		Name:       "views",
-		Columns:    ViewsColumns,
-		PrimaryKey: []*schema.Column{ViewsColumns[0]},
+	// UserCuriositiesTable holds the schema information for the "user_curiosities" table.
+	UserCuriositiesTable = &schema.Table{
+		Name:       "user_curiosities",
+		Columns:    UserCuriositiesColumns,
+		PrimaryKey: []*schema.Column{UserCuriositiesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "views_users_user",
-				Columns:    []*schema.Column{ViewsColumns[2]},
+				Symbol:     "user_curiosities_users_user",
+				Columns:    []*schema.Column{UserCuriositiesColumns[4]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "views_curiosities_curiosity",
-				Columns:    []*schema.Column{ViewsColumns[3]},
+				Symbol:     "user_curiosities_curiosities_curiosity",
+				Columns:    []*schema.Column{UserCuriositiesColumns[5]},
 				RefColumns: []*schema.Column{CuriositiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -144,20 +118,17 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		CuriositiesTable,
-		LikesTable,
 		PetsTable,
 		UsersTable,
-		ViewsTable,
+		UserCuriositiesTable,
 		UserPetsTable,
 	}
 )
 
 func init() {
 	CuriositiesTable.ForeignKeys[0].RefTable = PetsTable
-	LikesTable.ForeignKeys[0].RefTable = UsersTable
-	LikesTable.ForeignKeys[1].RefTable = CuriositiesTable
-	ViewsTable.ForeignKeys[0].RefTable = UsersTable
-	ViewsTable.ForeignKeys[1].RefTable = CuriositiesTable
+	UserCuriositiesTable.ForeignKeys[0].RefTable = UsersTable
+	UserCuriositiesTable.ForeignKeys[1].RefTable = CuriositiesTable
 	UserPetsTable.ForeignKeys[0].RefTable = UsersTable
 	UserPetsTable.ForeignKeys[1].RefTable = PetsTable
 }

@@ -22,18 +22,16 @@ const (
 	FieldEmail = "email"
 	// FieldTier holds the string denoting the tier field in the database.
 	FieldTier = "tier"
-	// FieldSubscriptionExpiresAt holds the string denoting the subscriptionexpiresat field in the database.
+	// FieldSubscriptionExpiresAt holds the string denoting the subscription_expires_at field in the database.
 	FieldSubscriptionExpiresAt = "subscription_expires_at"
-	// FieldCreatedAt holds the string denoting the createdat field in the database.
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
-	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
 	// EdgePets holds the string denoting the pets edge name in mutations.
 	EdgePets = "pets"
-	// EdgeLikes holds the string denoting the likes edge name in mutations.
-	EdgeLikes = "likes"
-	// EdgeViews holds the string denoting the views edge name in mutations.
-	EdgeViews = "views"
+	// EdgeUserCuriosities holds the string denoting the user_curiosities edge name in mutations.
+	EdgeUserCuriosities = "user_curiosities"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// PetsTable is the table that holds the pets relation/edge. The primary key declared below.
@@ -41,20 +39,13 @@ const (
 	// PetsInverseTable is the table name for the Pet entity.
 	// It exists in this package in order to avoid circular dependency with the "pet" package.
 	PetsInverseTable = "pets"
-	// LikesTable is the table that holds the likes relation/edge.
-	LikesTable = "likes"
-	// LikesInverseTable is the table name for the Like entity.
-	// It exists in this package in order to avoid circular dependency with the "like" package.
-	LikesInverseTable = "likes"
-	// LikesColumn is the table column denoting the likes relation/edge.
-	LikesColumn = "user_id"
-	// ViewsTable is the table that holds the views relation/edge.
-	ViewsTable = "views"
-	// ViewsInverseTable is the table name for the View entity.
-	// It exists in this package in order to avoid circular dependency with the "view" package.
-	ViewsInverseTable = "views"
-	// ViewsColumn is the table column denoting the views relation/edge.
-	ViewsColumn = "user_id"
+	// UserCuriositiesTable is the table that holds the user_curiosities relation/edge.
+	UserCuriositiesTable = "user_curiosities"
+	// UserCuriositiesInverseTable is the table name for the UserCuriosity entity.
+	// It exists in this package in order to avoid circular dependency with the "usercuriosity" package.
+	UserCuriositiesInverseTable = "user_curiosities"
+	// UserCuriositiesColumn is the table column denoting the user_curiosities relation/edge.
+	UserCuriositiesColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -89,11 +80,11 @@ var (
 	NameValidator func(string) error
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
-	// DefaultCreatedAt holds the default value on creation for the "createdAt" field.
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
-	// DefaultUpdatedAt holds the default value on creation for the "updatedAt" field.
+	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
 	DefaultUpdatedAt func() time.Time
-	// UpdateDefaultUpdatedAt holds the default value on update for the "updatedAt" field.
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
@@ -148,17 +139,17 @@ func ByTier(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTier, opts...).ToFunc()
 }
 
-// BySubscriptionExpiresAt orders the results by the subscriptionExpiresAt field.
+// BySubscriptionExpiresAt orders the results by the subscription_expires_at field.
 func BySubscriptionExpiresAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubscriptionExpiresAt, opts...).ToFunc()
 }
 
-// ByCreatedAt orders the results by the createdAt field.
+// ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
 }
 
-// ByUpdatedAt orders the results by the updatedAt field.
+// ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
@@ -177,31 +168,17 @@ func ByPets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByLikesCount orders the results by likes count.
-func ByLikesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByUserCuriositiesCount orders the results by user_curiosities count.
+func ByUserCuriositiesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newLikesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newUserCuriositiesStep(), opts...)
 	}
 }
 
-// ByLikes orders the results by likes terms.
-func ByLikes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByUserCuriosities orders the results by user_curiosities terms.
+func ByUserCuriosities(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newLikesStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
-// ByViewsCount orders the results by views count.
-func ByViewsCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newViewsStep(), opts...)
-	}
-}
-
-// ByViews orders the results by views terms.
-func ByViews(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newViewsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newUserCuriositiesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newPetsStep() *sqlgraph.Step {
@@ -211,17 +188,10 @@ func newPetsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2M, false, PetsTable, PetsPrimaryKey...),
 	)
 }
-func newLikesStep() *sqlgraph.Step {
+func newUserCuriositiesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(LikesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, true, LikesTable, LikesColumn),
-	)
-}
-func newViewsStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ViewsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, true, ViewsTable, ViewsColumn),
+		sqlgraph.To(UserCuriositiesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, UserCuriositiesTable, UserCuriositiesColumn),
 	)
 }
